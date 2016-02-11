@@ -161,9 +161,13 @@ for filename in argv[2:]:
                 cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
     elif train_or_test == 'test': #full image with all annotations 
         #if Annotation file exists, remove
-        filename_annotation = removeIfExists(output_dir, 'Annotations', os.path.basename(file_)+'.txt')
+        name = os.path.basename(file_)
+        filename_annotation = removeIfExists(output_dir, 'Annotations', name+'.txt')
         for object_data in data:
             with open(filename_annotation, 'a') as fp:
                 for datum in object_data:
                     fp.write(str(datum)+' ')
-                fp.write('\n')        
+                fp.write('\n')     
+        with open(filename_train, 'a') as fp:
+            fp.write(name+'\n')
+        img.save(os.path.join(output_dir, 'Images', name+file_extension))
