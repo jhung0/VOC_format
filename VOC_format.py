@@ -119,7 +119,7 @@ for filename in argv[2:]:
             cropped = img.crop((randx, randy, randx+small_size, randy+small_size))
     
             #if Annotation file exists, remove
-            filename_annotation = removeIfExists(output_dir, 'Annotations', subnames+'.txt')
+            filename_annotation = removeIfExists(output_dir, 'Annotations', subname+'.txt')
     
             #write and save annotation file, only including data that are within the bounds of the subimage
             empty = True
