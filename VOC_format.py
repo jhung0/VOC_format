@@ -166,4 +166,4 @@ for filename in argv[2:]:
             with open(filename_annotation, 'a') as fp:
                 for datum in object_data:
                     fp.write(str(datum)+' ')
-                        
+                fp.write('\n')        
