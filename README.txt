@@ -21,6 +21,7 @@ python remove_images.py [directory where replacement .tif images are] [directory
 3. Convert from LabelMe format to VOC format
 4. Cut each image into subimages, creating new annotation files with adjusted boxes
 python VOC_format.py [output directory] [image files in Images]
+e.g. python VOC_format.py ../try1/data/ ../Downloads/collection/Images/users/jane24/54gamplusring_20151223_outlines/*
 *change output_dir, num_subimages, small_size, code under #choose whether file is part of training or testing set
 
 VOC_format
