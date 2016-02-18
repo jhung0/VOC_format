@@ -24,9 +24,9 @@ def removeIfExists(output_dir, subdir, name):
 IGNORE_EDGE_CELLS = True
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 print 'output director', output_dir
-num_subimages = 24
+num_subimages = 6
 print 'number of subimages', num_subimages
-small_size = 448
+small_size = 896
 print 'size of subimages (px)', small_size
 
 #clear existing files
