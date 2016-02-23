@@ -179,8 +179,7 @@ for filename in argv[2:]:
 		cropped2 = cropped.copy()
 		#mode of each channel
 		mode_ = [stats.mode(cropped2[0]), stats.mode(cropped2[1]), stats.mode(cropped2[2])]
-		overlaps_array = []
-		overlaps = []
+
 		for edge_object in edge_data:
 		    patch_shape = cropped2[edge_object[0]:edge_object[2], edge_object[1]:edge_object[3], :].shape
 		    patch = np.ones(patch_shape)
@@ -188,16 +187,13 @@ for filename in argv[2:]:
 		        patch[:,:,i] = 120 + 120*2*(np.random.random_sample(patch[:,:,i].shape) - 0.5)
 		    cropped[edge_object[0]:edge_object[2], edge_object[1]:edge_object[3], :] = patch
 		    for inside_object in inside_data:
-			ixmin, iymin, ixmax, iymax
+			ixmin, iymin = max(edge_object[0], inside_object[0]), max(edge_object[1], inside_object[1])
+			ixmax, iymax = min(edge_object[2], inside_object[2]), min(edge_object[3], inside_object[3])
 			if ixmin >= ixmax or iymin >= iymax:
 			    continue
-			else:
+			else: #replace overlapping region with original
 			    overlap_box = np.array([ixmin, iymin, ixmax, iymax])
-			    overlaps.append(overlap_box)
-			    overlaps_array.append(cropped2[overlap_box[0]:overlap_box[2], overlap_box[1]:overlap_box[3], :])
-		     
-		for overlap_num, overlap in enumerate(overlaps):
-		    cropped[,overlap[1] ,:] = overlaps_array[overlap_num]
+			    cropped[overlap_box[0]:overlap_box[2],overlap_box[1]:overlap_box[3],:] = cropped2[overlap_box[0]:overlap_box[2], overlap_box[1]:overlap_box[3], :]
 
             #if annotation file not empty
             #save cropped image name in train.txt file and cropped image
