@@ -113,10 +113,11 @@ for filename in argv[2:]:
             raise Exception('object data ', object_data)
         data.append(object_data)
 
-    empty = True
+    
     if train_or_test  == 'train':
         for sub in range(num_subimages):
             print sub
+            empty = True
             subname = os.path.basename(file_)+'_'+str(sub)
             #randomly choose top left corner of subimage
             randx = random.randint(0, width-small_size)
@@ -166,6 +167,7 @@ for filename in argv[2:]:
                     fp.write(subname+'\n')
                 cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
     elif train_or_test == 'test': #full image with all annotations
+        empty = True
         #if Annotation file exists, remove
         name = os.path.basename(file_)
         filename_annotation = removeIfExists(output_dir, 'Annotations', name+'.txt')
