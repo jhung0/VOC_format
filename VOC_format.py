@@ -22,6 +22,7 @@ def removeIfExists(output_dir, subdir, name):
     return filename
     
 IGNORE_EDGE_CELLS = True
+UNCERTAIN_CLASS = True
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 print 'output director', output_dir
 num_subimages = 6
@@ -80,6 +81,11 @@ for filename in argv[2:]:
         elif IGNORE_EDGE_CELLS and label[0] == 'e':
             continue
         elif label[0] == 'e':
+            label = label[1:]
+            
+        if UNCERTAIN_CLASS and label[0] == 'd':
+            label = 'uncertain'
+        elif label[0] == 'd':
             label = label[1:]
         try:
             box = object.find('segm').find('box')
