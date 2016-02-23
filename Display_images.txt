@@ -1,3 +1,4 @@
+
 import numpy as np
 from PIL import Image
 from IPython.display import display
@@ -6,15 +7,16 @@ import os
 
 #obtain list of test images in order
 test_files = []
-with open('/home/ubuntu/try1/data/ImageSets/test.txt') as f:
+data_path = '/opt/try1/'
+with open(os.path.join(data_path,'data','ImageSets', 'test.txt')) as f:
     for file_ in f.readlines():
         test_files.append(file_.strip())
 #print test_files
 
-image_path = '/home/ubuntu/try1/data/Images/'
+image_path = os.path.join(data_path,'data','Images')
 classes = ['__background__', 'rbc', 'ring', 'gam', 'uncertain']
 THRESHOLD = 0.5
-path = '/home/ubuntu/try1/results/test/'
+path = os.path.join(data_path,'results', 'test')
 
 #for each test image, for each class get the bounding box coordinates of the objects with probability >= THRESHOLD
 #for each filtered detection, draw a colored box 
@@ -35,7 +37,7 @@ for file_index, file_ in enumerate(test_files):
         filtered_boxes=[]
         
         #open nms detection file
-        filename = '15913_det_test_'+classes[cls]+'.txt'
+        filename = '13056_det_test_'+classes[cls]+'.txt'
         with open(os.path.join(path, filename), 'r') as f:
             for line in f.readlines():
                 line_list = line.split()
