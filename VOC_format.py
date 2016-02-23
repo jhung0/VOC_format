@@ -113,6 +113,7 @@ for filename in argv[2:]:
             raise Exception('object data ', object_data)
         data.append(object_data)
 
+    empty = True
     if train_or_test  == 'train':
         for sub in range(num_subimages):
             print sub
@@ -128,7 +129,6 @@ for filename in argv[2:]:
             filename_annotation = removeIfExists(output_dir, 'Annotations', subname+'.txt')
     
             #write and save annotation file, only including data that are within the bounds of the subimage
-            empty = True
             for object_data in data:
                 adjusted_data = np.array(object_data[0:-1]).copy()
                 #adjust according to top left corner
@@ -165,15 +165,18 @@ for filename in argv[2:]:
                 with open(filename_train, 'a') as fp:
                     fp.write(subname+'\n')
                 cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
-    elif train_or_test == 'test': #full image with all annotations 
+    elif train_or_test == 'test': #full image with all annotations
         #if Annotation file exists, remove
         name = os.path.basename(file_)
         filename_annotation = removeIfExists(output_dir, 'Annotations', name+'.txt')
+        
         for object_data in data:
+            empty = False
             with open(filename_annotation, 'a') as fp:
                 for datum in object_data:
                     fp.write(str(datum)+' ')
                 fp.write('\n')     
-        with open(filename_train, 'a') as fp:
-            fp.write(name+'\n')
-        img.save(os.path.join(output_dir, 'Images', name+file_extension))
+        if not empty:
+            with open(filename_train, 'a') as fp:
+                fp.write(name+'\n')
+            img.save(os.path.join(output_dir, 'Images', name+file_extension))
