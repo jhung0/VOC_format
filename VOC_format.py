@@ -25,9 +25,9 @@ IGNORE_EDGE_CELLS = True
 UNCERTAIN_CLASS = True
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 print 'output director', output_dir
-num_subimages = 6
+num_subimages = 96
 print 'number of subimages', num_subimages
-small_size = 896
+small_size = 224
 print 'size of subimages (px)', small_size
 
 #clear existing files
