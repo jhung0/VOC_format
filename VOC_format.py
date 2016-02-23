@@ -7,6 +7,7 @@ import os
 import xml.etree.ElementTree as ET
 import operator
 import numpy as np
+from scipy import stats
 '''
 Randomly takes X subsamples of full image and outputs in other folder
 Usage: python VOC_format.py [Output directory] [Image files]
@@ -23,6 +24,8 @@ def removeIfExists(output_dir, subdir, name):
     
 IGNORE_EDGE_CELLS = True
 UNCERTAIN_CLASS = True
+PATCH_EDGE_CELLS = True
+
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 print 'output director', output_dir
 num_subimages = 96
@@ -130,6 +133,8 @@ for filename in argv[2:]:
             filename_annotation = removeIfExists(output_dir, 'Annotations', subname+'.txt')
     
             #write and save annotation file, only including data that are within the bounds of the subimage
+	    edge_data = []
+	    inside_data = []
             for object_data in data:
                 adjusted_data = np.array(object_data[0:-1]).copy()
                 #adjust according to top left corner
@@ -140,19 +145,27 @@ for filename in argv[2:]:
                 adjusted_data_x = np.append(adjusted_data[0], adjusted_data[2])
                 adjusted_data_y = np.append(adjusted_data[1], adjusted_data[3])
                 if IGNORE_EDGE_CELLS:
-                    if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size):
+                    if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): #inside image
                         empty = False
+			inside_data.append(adjusted_data)
                         with open(filename_annotation, 'a') as fp:
                             for datum in adjusted_data:
                                 fp.write(str(datum)+' ')
                             print object_data, adjusted_data, object_data[-1]
                             fp.write(str(object_data[-1])+'\n')
+		    elif PATCH_EDGE_CELLS and not (np.all(adjusted_data_x < 0) or np.all(adjusted_data_y >= small_size) or
+                                np.all(adjusted_data_x >= small_size) or np.all(adjusted_data_y < 0)): #edge of image
+			if np.any(adjusted_data >= small_size):
+                            adjusted_data = np.minimum(adjusted_data, small_size-1)
+		        if np.any(adjusted_data < 0):
+		            adjusted_data = np.maximum(adjusted_data, 0)
+			edge_data.append(adjusted_data)
                 else:
                     if not (np.all(adjusted_data_x < 0) or np.all(adjusted_data_y >= small_size) or
                                 np.all(adjusted_data_x >= small_size) or np.all(adjusted_data_y < 0)):
                         with open(filename_annotation, 'a') as fp:
                             if np.any(adjusted_data >= small_size):
-                                adjusted_data = np.minimum(adjusted_data, small_size)#map(min, adjusted_data, [228]*4)
+                                adjusted_data = np.minimum(adjusted_data, small_size-1)#map(min, adjusted_data, [size-1]*4)
                             if np.any(adjusted_data < 0):
                                 adjusted_data = np.maximum(adjusted_data, 0)#map(max, adjusted_data, [0]*4)
                             for datum in adjusted_data:
@@ -160,6 +173,32 @@ for filename in argv[2:]:
                             print object_data, adjusted_data, object_data[-1]
                             fp.write(str(object_data[-1])+'\n')
                             empty = False
+
+	    #alter cropped image 
+	    if PATCH_EDGE_CELLS:
+		cropped2 = cropped.copy()
+		#mode of each channel
+		mode_ = [stats.mode(cropped2[0]), stats.mode(cropped2[1]), stats.mode(cropped2[2])]
+		overlaps_array = []
+		overlaps = []
+		for edge_object in edge_data:
+		    patch_shape = cropped2[edge_object[0]:edge_object[2], edge_object[1]:edge_object[3], :].shape
+		    patch = np.ones(patch_shape)
+		    for i in range(3):
+		        patch[:,:,i] = 120 + 120*2*(np.random.random_sample(patch[:,:,i].shape) - 0.5)
+		    cropped[edge_object[0]:edge_object[2], edge_object[1]:edge_object[3], :] = patch
+		    for inside_object in inside_data:
+			ixmin, iymin, ixmax, iymax
+			if ixmin >= ixmax or iymin >= iymax:
+			    continue
+			else:
+			    overlap_box = np.array([ixmin, iymin, ixmax, iymax])
+			    overlaps.append(overlap_box)
+			    overlaps_array.append(cropped2[overlap_box[0]:overlap_box[2], overlap_box[1]:overlap_box[3], :])
+		     
+		for overlap_num, overlap in enumerate(overlaps):
+		    cropped[,overlap[1] ,:] = overlaps_array[overlap_num]
+
             #if annotation file not empty
             #save cropped image name in train.txt file and cropped image
             if not empty:
