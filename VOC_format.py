@@ -186,9 +186,14 @@ for filename in argv[2:]:
 		for edge_object in edge_data:
 		    patch_shape = cropped2[edge_object[1]:edge_object[3]+1, edge_object[0]:edge_object[2]+1, :].shape
 		    patch = np.ones(patch_shape)
+		    rand = np.random.random()
 		    for i in range(3):
+		    	if rand < 0.5:
+		    		patch[:,:,i] = 0
+		    	else:
+		    		patch[:,:,i] = 255
 		        #patch[:,:,i] = 255./2 + 255*(np.random.random_sample(patch[:,:,i].shape) - 0.5)
-		        patch[:,:,i] = mode_[i] + min(mode_[i], 255-mode_[i])*.5*(np.random.random_sample(patch[:,:,i].shape) - 0.5)
+		        #patch[:,:,i] = mode_[i] + min(mode_[i], 255-mode_[i])*.5*(np.random.random_sample(patch[:,:,i].shape) - 0.5)
 		    cropped[edge_object[1]:edge_object[3]+1,edge_object[0]:edge_object[2]+1, :] = patch
 		    for inside_object in inside_data:
 			ixmin, iymin = max(edge_object[0], inside_object[0]), max(edge_object[1], inside_object[1])
