@@ -178,7 +178,7 @@ for filename in argv[2:]:
 	    if PATCH_EDGE_CELLS:
 		cropped2 = cropped.copy()
 		#mode of each channel
-		mode_ = [stats.mode(cropped2[0]), stats.mode(cropped2[1]), stats.mode(cropped2[2])]
+		mode_ = [stats.mode(cropped2[:,:,0]), stats.mode(cropped2[:,:,1]), stats.mode(cropped2[:,:,2])]
 
 		for edge_object in edge_data:
 		    patch_shape = cropped2[edge_object[0]:edge_object[2], edge_object[1]:edge_object[3], :].shape
