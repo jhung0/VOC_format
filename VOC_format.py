@@ -188,7 +188,7 @@ for filename in argv[2:]:
 		    patch = np.ones(patch_shape)
 		    for i in range(3):
 		        patch[:,:,i] = 255./2 + 255*(np.random.random_sample(patch[:,:,i].shape) - 0.5)
-		    cropped[edge_object[0]:edge_object[2], edge_object[1]:edge_object[3], :] = patch
+		    cropped[edge_object[1]:edge_object[3],edge_object[0]:edge_object[2], :] = patch
 		    for inside_object in inside_data:
 			ixmin, iymin = max(edge_object[0], inside_object[0]), max(edge_object[1], inside_object[1])
 			ixmax, iymax = min(edge_object[2], inside_object[2]), min(edge_object[3], inside_object[3])
@@ -196,7 +196,7 @@ for filename in argv[2:]:
 			    continue
 			else: #replace overlapping region with original
 			    overlap_box = np.array([ixmin, iymin, ixmax, iymax])
-			    cropped[overlap_box[1]:overlap_box[3],overlap_box[0]:overlap_box[2],:] = cropped2[overlap_box[1]:overlap_box[3],overlap_box[0]:overlap_box[2], :]
+			    cropped[overlap_box[0]:overlap_box[2],overlap_box[1]:overlap_box[3],:] = cropped2[overlap_box[0]:overlap_box[2],overlap_box[1]:overlap_box[3], :]
 		cropped = Image.fromarray(cropped, 'RGB')
 		
             #if annotation file not empty
