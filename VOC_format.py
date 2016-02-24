@@ -176,7 +176,7 @@ for filename in argv[2:]:
 
 	    #alter cropped image 
 	    if PATCH_EDGE_CELLS:
-	    	cropped = np.asarray(cropped)
+	    	cropped = np.asarray(cropped).copy()
 		cropped2 = cropped.copy()
 		#mode of each channel
 		mode_ = [stats.mode(cropped2[:,:,0]), stats.mode(cropped2[:,:,1]), stats.mode(cropped2[:,:,2])]
