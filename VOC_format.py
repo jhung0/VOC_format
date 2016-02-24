@@ -28,7 +28,7 @@ PATCH_EDGE_CELLS = True
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 print 'output director', output_dir
-num_subimages = 96
+num_subimages = 50
 print 'number of subimages', num_subimages
 small_size = 224
 print 'size of subimages (px)', small_size
