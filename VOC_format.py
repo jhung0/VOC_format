@@ -137,6 +137,7 @@ for filename in argv[2:]:
 	    edge_data = []
 	    inside_data = []
             for object_data in data:
+            	print object_data
                 adjusted_data = np.array(object_data[0:-1]).copy()
                 #adjust according to top left corner
                 adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
