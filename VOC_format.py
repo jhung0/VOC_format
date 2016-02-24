@@ -75,11 +75,12 @@ for filename in argv[2:]:
     root = tree.getroot()
     data = []
     for object in root.findall('object'):
+    	deleted = int(object.fine('deleted').text)
         label = object.find('name').text
         #if label is empty, skip
         #if IGNORE_EDGE_CELLS is true and label begins with e, skip object (CONTINUE NOT BREAK)
         #if label starts with e (cell is on the edge), relabel without e
-        if not label:
+        if deleted or not label:
             continue
         elif IGNORE_EDGE_CELLS and label[0] == 'e':
             continue
