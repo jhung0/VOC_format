@@ -120,7 +120,7 @@ for filename in argv[2:]:
     
     if train_or_test  == 'train':
         for sub in range(num_subimages):
-            #print sub
+            print sub
             empty = True
             subname = os.path.basename(file_)+'_'+str(sub)
             #randomly choose top left corner of subimage
