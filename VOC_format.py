@@ -24,7 +24,7 @@ def removeIfExists(output_dir, subdir, name):
     
 IGNORE_EDGE_CELLS = True
 UNCERTAIN_CLASS = True
-PATCH_EDGE_CELLS = True
+PATCH_EDGE_CELLS = False
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 print 'output director', output_dir
