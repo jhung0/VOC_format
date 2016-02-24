@@ -184,7 +184,7 @@ for filename in argv[2:]:
 		mode_ = [stats.mode(cropped2[:,:,0]), stats.mode(cropped2[:,:,1]), stats.mode(cropped2[:,:,2])]
 
 		for edge_object in edge_data:
-		    patch_shape = cropped2[edge_object[0]:edge_object[2], edge_object[1]:edge_object[3], :].shape
+		    patch_shape = cropped2[edge_object[1]:edge_object[3], edge_object[0]:edge_object[2], :].shape
 		    patch = np.ones(patch_shape)
 		    for i in range(3):
 		        patch[:,:,i] = 255./2 + 255*(np.random.random_sample(patch[:,:,i].shape) - 0.5)
