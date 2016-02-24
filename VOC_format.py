@@ -24,7 +24,7 @@ def removeIfExists(output_dir, subdir, name):
     
 IGNORE_EDGE_CELLS = True
 UNCERTAIN_CLASS = True
-PATCH_EDGE_CELLS = False
+PATCH_EDGE_CELLS = True
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 print 'output director', output_dir
@@ -120,7 +120,7 @@ for filename in argv[2:]:
     
     if train_or_test  == 'train':
         for sub in range(num_subimages):
-            print sub
+            #print sub
             empty = True
             subname = os.path.basename(file_)+'_'+str(sub)
             #randomly choose top left corner of subimage
