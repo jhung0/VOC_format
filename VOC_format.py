@@ -176,6 +176,7 @@ for filename in argv[2:]:
 
 	    #alter cropped image 
 	    if PATCH_EDGE_CELLS:
+	    	cropped = np.asarray(cropped)
 		cropped2 = cropped.copy()
 		#mode of each channel
 		mode_ = [stats.mode(cropped2[:,:,0]), stats.mode(cropped2[:,:,1]), stats.mode(cropped2[:,:,2])]
@@ -194,7 +195,8 @@ for filename in argv[2:]:
 			else: #replace overlapping region with original
 			    overlap_box = np.array([ixmin, iymin, ixmax, iymax])
 			    cropped[overlap_box[0]:overlap_box[2],overlap_box[1]:overlap_box[3],:] = cropped2[overlap_box[0]:overlap_box[2], overlap_box[1]:overlap_box[3], :]
-
+		cropped = Image.fromarray(cropped, 'RGB')
+		
             #if annotation file not empty
             #save cropped image name in train.txt file and cropped image
             if not empty:
