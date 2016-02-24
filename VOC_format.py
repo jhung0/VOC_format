@@ -196,7 +196,7 @@ for filename in argv[2:]:
 			    continue
 			else: #replace overlapping region with original
 			    overlap_box = np.array([ixmin, iymin, ixmax, iymax])
-			    cropped[overlap_box[0]:overlap_box[2],overlap_box[1]:overlap_box[3],:] = cropped2[overlap_box[0]:overlap_box[2], overlap_box[1]:overlap_box[3], :]
+			    cropped[overlap_box[1]:overlap_box[3],overlap_box[0]:overlap_box[2],:] = cropped2[overlap_box[1]:overlap_box[3],overlap_box[0]:overlap_box[2], :]
 		cropped = Image.fromarray(cropped, 'RGB')
 		
             #if annotation file not empty
