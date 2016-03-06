@@ -40,7 +40,7 @@ for name in ['Annotations', 'ImageSets', 'Images']:
         os.remove(os.path.join(clear_dir, f))
 
 #if train.txt or test.txt exists, remove
-for train_or_test in ['train', 'text']:
+for train_or_test in ['train', 'test']:
     filename_train = removeIfExists(output_dir, 'ImageSets', train_or_test+'.txt')
 
 #for each image, subsample image and for each subimage, create associated file with bounding box and class information
