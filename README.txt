@@ -20,7 +20,7 @@ python remove_images.py [directory where replacement .tif images are] [directory
 python remove_images.py /opt/NF54gamplusring_20151223/ /home/jyhung/Downloads/collection/Images/users/jane24/54gamplusring_20151223_outlines/ 
 
 and if there are jpg files, manually move them
-mv /opt/NF54gamplusring_20151223/SNAP-144314-0001.jpg /home/jyhung/Downloads/collection/Images/users/jane24/54gamplusring_20151223_outlines/snap-144314-0001.jpg
+cp /opt/NF54gamplusring_20151223/SNAP-144314-0001.jpg /home/jyhung/Downloads/collection/Images/users/jane24/54gamplusring_20151223_outlines/snap-144314-0001.jpg
 
 3. Convert from LabelMe format to VOC format
 4. Cut each image into subimages, creating new annotation files with adjusted boxes
