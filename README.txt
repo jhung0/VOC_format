@@ -17,6 +17,7 @@ Collection
 2. Only keep .tif files that have an associated Annotation file
 in the Images -> users -> jane24 -> collectionName directory run
 python remove_images.py [directory where replacement .tif images are] [directory where images should be]
+python remove_images.py /opt/NF54gamplusring_20151223/ /home/jyhung/Downloads/collection/Images/users/jane24/54gamplusring_20151223_outlines/ 
 
 3. Convert from LabelMe format to VOC format
 4. Cut each image into subimages, creating new annotation files with adjusted boxes
