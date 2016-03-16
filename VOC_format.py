@@ -152,7 +152,7 @@ for filename in argv[2:]:
                 if IGNORE_EDGE_CELLS:
                     if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): #inside image
 		        #if object is uncertain, and there is no uncertain class, then don't consider the subimage
-		        if not UNCERTAIN_CLASS and object_data[-1].lower() == 'uncertain':
+		        if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
 		            break
                         empty = False
 			inside_data.append(adjusted_data)
