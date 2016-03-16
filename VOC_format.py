@@ -159,7 +159,7 @@ for filename in argv[2:]:
                         with open(filename_annotation, 'a') as fp:
                             for datum in adjusted_data:
                                 fp.write(str(datum)+' ')
-                            print object_data, adjusted_data, object_data[-1]
+                            print adjusted_data, object_data[4]
                             fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
             #if annotation file not empty
             #save cropped image name in train.txt file and cropped image
