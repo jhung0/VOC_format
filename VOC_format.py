@@ -23,7 +23,7 @@ def removeIfExists(output_dir, subdir, name):
     return filename
     
 IGNORE_EDGE_CELLS = True
-DIFFICULT = False
+DIFFICULT = True
 UNCERTAIN_CLASS = False
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
@@ -77,6 +77,7 @@ for filename in argv[2:]:
     for object in root.findall('object'):
     	deleted = int(object.find('deleted').text)
         label = object.find('name').text
+        difficult = False
         #if label is empty, skip
         #if IGNORE_EDGE_CELLS is true and label begins with e, skip object (CONTINUE NOT BREAK)
         #if label starts with e (cell is on the edge), relabel without e
@@ -90,6 +91,7 @@ for filename in argv[2:]:
         if not DIFFICULT and label[0] == 'd':
             label = 'uncertain'
         elif label[0] == 'd':
+            difficult = True
             label = label[1:]
         try:
             box = object.find('segm').find('box')
@@ -112,7 +114,7 @@ for filename in argv[2:]:
         xmax = int(max(x))
         ymax = int(max(y))
 
-        object_data = [xmin, ymin, xmax, ymax, label]
+        object_data = [xmin, ymin, xmax, ymax, label, difficult]
         if object_data[0] >= object_data[2] or object_data[1] >= object_data[3]:
             raise Exception('object data ', object_data)
         data.append(object_data)
@@ -139,7 +141,7 @@ for filename in argv[2:]:
 	    inside_data = []
             for object_data in data:
             	#print object_data
-                adjusted_data = np.array(object_data[0:-1]).copy()
+                adjusted_data = np.array(object_data[0:4]).copy()
                 #adjust according to top left corner
                 adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
     
@@ -158,7 +160,7 @@ for filename in argv[2:]:
                             for datum in adjusted_data:
                                 fp.write(str(datum)+' ')
                             print object_data, adjusted_data, object_data[-1]
-                            fp.write(str(object_data[-1])+'\n')
+                            fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
             #if annotation file not empty
             #save cropped image name in train.txt file and cropped image
             else:
