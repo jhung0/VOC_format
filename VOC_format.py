@@ -22,14 +22,15 @@ def removeIfExists(output_dir, subdir, name):
         pass
     return filename
     
-IGNORE_EDGE_CELLS = True
-DIFFICULT = True
-UNCERTAIN_CLASS = False
+IGNORE_EDGE_CELLS = True #whether to ignore cells at the edge of the full image
+DIFFICULT = True #whether there's a difficult tag
+ROTATE = True #whether to also rotate subimages by 90 clockwise
+UNCERTAIN_CLASS = False #don't have uncertain class, either ignore or tag as difficult
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 print 'output director', output_dir
 num_subimages = 50
-print 'number of subimages', num_subimages
+print 'number of subimages (not including rotations)', num_subimages
 small_size = 224
 print 'size of subimages (px)', small_size
 
