@@ -24,7 +24,8 @@ def removeIfExists(output_dir, subdir, name):
     
 IGNORE_EDGE_CELLS = True #whether to ignore cells at the edge of the full image
 DIFFICULT = True #whether there's a difficult tag
-ROTATE = True #whether to also rotate subimages by 90 clockwise
+ROTATE = True #whether to double subimages with half subimages rotated by 90, 180, 270 counterclockwise
+V_FLIP = True #whether to 
 UNCERTAIN_CLASS = False #don't have uncertain class, either ignore or tag as difficult
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
@@ -122,24 +123,33 @@ for filename in argv[2:]:
 
     
     if train_or_test  == 'train':
+    	#if ROTATE, double the number of subimages
+    	if ROTATE:
+    		num_subimages = 2*num_subimages
+    		
         for sub in range(num_subimages):
             print sub
             empty = True
             subname = os.path.basename(file_)+'_'+str(sub)
+            
             #randomly choose top left corner of subimage
             randx = random.randint(0, width-small_size)
             randy = random.randint(0, height-small_size)
             print('top left corner coordinates:%s,%s'%(randx, randy))
             #save cropped image
             cropped = img.crop((randx, randy, randx+small_size, randy+small_size))
-    
+            
+            #if ROTATE, after processing the original subimage, rotate by 90 and process
+            if ROTATE and sub%2 == 1:
+            	cropped = cropped.rotate(90)
+            	
             #if Annotation file exists, remove
             filename_annotation = removeIfExists(output_dir, 'Annotations', subname+'.txt')
-
+            
             	
             #write and save annotation file, only including data that are within the bounds of the subimage
-	    edge_data = []
-	    inside_data = []
+            edge_data = []
+            inside_data = []
             for object_data in data:
             	#print object_data
                 adjusted_data = np.array(object_data[0:4]).copy()
@@ -157,6 +167,9 @@ for filename in argv[2:]:
 		            break
                         empty = False
 			inside_data.append(adjusted_data)
+			#if ROTATE, rotate adjusted_data
+			if ROTATE:
+				adjusted_data = np.array([adjusted_data[1], adjusted_data[0], adjusted_data[3], adjusted_data[2] ])
                         with open(filename_annotation, 'a') as fp:
                             for datum in adjusted_data:
                                 fp.write(str(datum)+' ')
