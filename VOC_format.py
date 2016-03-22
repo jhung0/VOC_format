@@ -17,7 +17,7 @@ Includes flags for different options.
 
 #extract data from xml file
 def extractObjectData(obj):
-	deleted = int(obj.find('deleted').text)
+    deleted = int(obj.find('deleted').text)
     label = obj.find('name').text
     difficult = False
     #if label is empty, skip
