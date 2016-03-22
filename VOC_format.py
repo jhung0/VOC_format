@@ -14,6 +14,41 @@ Usage: python VOC_format.py [Output directory] [Image files]
 Includes flags for different options. 
 '''
 
+
+#extract data from xml file
+def extractObjectData(obj):
+	deleted = int(obj.find('deleted').text)
+    label = obj.find('name').text
+    difficult = False
+    #if label is empty, skip
+    #if IGNORE_EDGE_CELLS is true and label begins with e, skip object (CONTINUE NOT BREAK)
+    #if label starts with e (cell is on the edge), relabel without e
+    if deleted or not label or label[0] == 'e':
+        continue
+        
+    if not DIFFICULT and label[0] == 'd':
+        label = 'uncertain'
+    elif label[0] == 'd':
+        difficult = True
+        label = label[1:]
+    try:
+        box = obj.find('segm').find('box')
+        x = [int(box.find('xmin').text), int(box.find('xmax').text)]
+        y = [int(box.find('ymin').text), int(box.find('ymax').text)]
+    except:
+        polygon = object.find('polygon')
+        x = [int(pt.find('x').text) for pt in polygon.findall('pt')]
+        y = [int(pt.find('y').text) for pt in polygon.findall('pt')]
+
+    xmin = int(min(x))
+    ymin = int(min(y))
+    xmax = int(max(x))
+    ymax = int(max(y))
+	
+    if xmin >= xmax or ymin >= ymax:
+        raise Exception('object data ', xmin, ymin, xmax, ymax)
+	return xmin, ymin, xmax, ymax
+
 #if file exists, remove
 def removeIfExists(output_dir, subdir, name): 
     filename = os.path.join(output_dir, subdir, name)
@@ -22,7 +57,8 @@ def removeIfExists(output_dir, subdir, name):
     except OSError:
         pass
     return filename
-    
+
+
 DIFFICULT = True #whether there's a difficult tag
 ROTATE = True #whether to double subimages with half subimages rotated by 90, 180, 270 counterclockwise
 UNCERTAIN_CLASS = False #don't have uncertain class, either ignore or tag as difficult
@@ -72,50 +108,17 @@ for filename in argv[2:]:
         filename_xml = os.path.join(path_collection[0], 'Annotations', path_collection[1].split(file_extension)[0].lower()+'.xml')
     else:
         raise Exception('%s xml file not found'%(path_collection[1].split(file_extension)[0]))
+        
+    data = []
+    
     tree = ET.parse(filename_xml)
     root = tree.getroot()
-    data = []
-    for object in root.findall('object'):
-    	deleted = int(object.find('deleted').text)
-        label = object.find('name').text
-        difficult = False
-        #if label is empty, skip
-        #if IGNORE_EDGE_CELLS is true and label begins with e, skip object (CONTINUE NOT BREAK)
-        #if label starts with e (cell is on the edge), relabel without e
-        if deleted or not label:
-            continue
-        elif label[0] == 'e':
-            continue
-            
-        if not DIFFICULT and label[0] == 'd':
-            label = 'uncertain'
-        elif label[0] == 'd':
-            difficult = True
-            label = label[1:]
-        try:
-            box = object.find('segm').find('box')
-            x = []
-            y = []
-            x.append(int(box.find('xmin').text))
-            y.append(int(box.find('ymin').text))
-            x.append(int(box.find('xmax').text))
-            y.append(int(box.find('ymax').text))
-
-        except:
-            polygon = object.find('polygon')
-            x = []
-            y = []
-            for pt in polygon.findall('pt'):
-                x.append(int(pt.find('x').text))
-                y.append(int(pt.find('y').text))
-        xmin = int(min(x))
-        ymin = int(min(y))
-        xmax = int(max(x))
-        ymax = int(max(y))
-
+    
+    
+    for obj in root.findall('object'):
+    	
+        xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
-        if object_data[0] >= object_data[2] or object_data[1] >= object_data[3]:
-            raise Exception('object data ', object_data)
         data.append(object_data)
 
     
