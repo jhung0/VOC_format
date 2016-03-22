@@ -11,6 +11,7 @@ from scipy import stats
 '''
 Randomly takes X subsamples of full image and outputs in other folder
 Usage: python VOC_format.py [Output directory] [Image files]
+Includes flags for different options. 
 '''
 
 #if file exists, remove
@@ -22,10 +23,8 @@ def removeIfExists(output_dir, subdir, name):
         pass
     return filename
     
-IGNORE_EDGE_CELLS = True #whether to ignore cells at the edge of the full image
 DIFFICULT = True #whether there's a difficult tag
 ROTATE = True #whether to double subimages with half subimages rotated by 90, 180, 270 counterclockwise
-V_FLIP = True #whether to 
 UNCERTAIN_CLASS = False #don't have uncertain class, either ignore or tag as difficult
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
@@ -85,10 +84,8 @@ for filename in argv[2:]:
         #if label starts with e (cell is on the edge), relabel without e
         if deleted or not label:
             continue
-        elif IGNORE_EDGE_CELLS and label[0] == 'e':
-            continue
         elif label[0] == 'e':
-            label = label[1:]
+            continue
             
         if not DIFFICULT and label[0] == 'd':
             label = 'uncertain'
@@ -160,21 +157,20 @@ for filename in argv[2:]:
                 #adjust if 1 or 2 coordinates are inside
                 adjusted_data_x = np.append(adjusted_data[0], adjusted_data[2])
                 adjusted_data_y = np.append(adjusted_data[1], adjusted_data[3])
-                if IGNORE_EDGE_CELLS:
-                    if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): #inside image
-		        #if object is uncertain, and there is no uncertain class, then don't consider the subimage
-		        if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
-		            break
-                        empty = False
-			inside_data.append(adjusted_data)
-			#if ROTATE, rotate adjusted_data
-			if ROTATE:
-				adjusted_data = np.array([adjusted_data[1], adjusted_data[0], adjusted_data[3], adjusted_data[2] ])
-                        with open(filename_annotation, 'a') as fp:
-                            for datum in adjusted_data:
-                                fp.write(str(datum)+' ')
-                            print adjusted_data, object_data[4]
-                            fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
+		if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): #inside image
+		#if object is uncertain, and there is no uncertain class, then don't consider the subimage
+		if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
+		    break
+		empty = False
+		inside_data.append(adjusted_data)
+		#if ROTATE, rotate adjusted_data
+		if ROTATE:
+			adjusted_data = np.array([adjusted_data[1], adjusted_data[0], adjusted_data[3], adjusted_data[2] ])
+		with open(filename_annotation, 'a') as fp:
+		    for datum in adjusted_data:
+		        fp.write(str(datum)+' ')
+		    print adjusted_data, object_data[4]
+		    fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
             #if annotation file not empty
             #save cropped image name in train.txt file and cropped image
             else:
