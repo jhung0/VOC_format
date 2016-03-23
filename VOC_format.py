@@ -13,6 +13,8 @@ Randomly takes X subsamples of full image and outputs in other folder
 Usage: python VOC_format.py [Output directory] [Image files]
 Includes flags for different options. 
 '''
+#adjust data after taking subimage
+def adjustObjectData():
 
 #extract data from xml file
 def extractObjectData(obj):
@@ -65,7 +67,7 @@ def removeIfExists(output_dir, subdir, name):
 
 
 DIFFICULT = True #whether there's a difficult tag
-ROTATE = True #whether to double subimages with half subimages rotated by 90, 180, 270 counterclockwise
+FROTATE = True #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
 UNCERTAIN_CLASS = False #don't have uncertain class, either ignore or tag as difficult
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
@@ -114,21 +116,16 @@ for filename in argv[2:]:
         raise Exception('%s xml file not found'%(xml_name))
         
     data = []
-    
     tree = ET.parse(filename_xml)
     root = tree.getroot()
-    
-    
     for obj in root.findall('object'):
-    	
         xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
         data.append(object_data)
-
     
     if train_or_test  == 'train':
     	#if ROTATE, double the number of subimages
-    	if ROTATE:
+    	if FROTATE:
     		num_subimages = 2*num_subimages
     		
         for sub in range(num_subimages):
@@ -154,6 +151,7 @@ for filename in argv[2:]:
             #write and save annotation file, only including data that are within the bounds of the subimage
             edge_data = []
             inside_data = []
+            adjustObjectData(filename_annotation, data, randx, randy, FROTATE, UNCERTAIN_CLASS)
             for object_data in data:
             	#print object_data
                 adjusted_data = np.array(object_data[0:4]).copy()
