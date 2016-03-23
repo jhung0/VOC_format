@@ -147,7 +147,6 @@ for filename in argv[2:]:
             #if Annotation file exists, remove
             filename_annotation = removeIfExists(output_dir, 'Annotations', subname+'.txt')
             
-            	
             #write and save annotation file, only including data that are within the bounds of the subimage
             edge_data = []
             inside_data = []
@@ -157,32 +156,29 @@ for filename in argv[2:]:
                 adjusted_data = np.array(object_data[0:4]).copy()
                 #adjust according to top left corner
                 adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
-    
-                #write if all coordinates are inside the subimage
-                #adjust if 1 or 2 coordinates are inside
-                adjusted_data_x = np.append(adjusted_data[0], adjusted_data[2])
-                adjusted_data_y = np.append(adjusted_data[1], adjusted_data[3])
-		if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): #inside image
-		#if object is uncertain, and there is no uncertain class, then don't consider the subimage
-		if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
-		    break
-		empty = False
-		inside_data.append(adjusted_data)
-		#if ROTATE, rotate adjusted_data
-		if ROTATE:
-			adjusted_data = np.array([adjusted_data[1], adjusted_data[0], adjusted_data[3], adjusted_data[2] ])
-		with open(filename_annotation, 'a') as fp:
-		    for datum in adjusted_data:
-		        fp.write(str(datum)+' ')
-		    print adjusted_data, object_data[4]
-		    fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
+                
+	            #inside image
+	            if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): 
+	            	#if object is uncertain, and there is no uncertain class, then don't consider the subimage
+					if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
+					    break
+					empty = False
+					inside_data.append(adjusted_data)
+					#if ROTATE, rotate adjusted_data
+					if ROTATE:
+						adjusted_data = np.array([adjusted_data[1], adjusted_data[0], adjusted_data[3], adjusted_data[2] ])
+					with open(filename_annotation, 'a') as fp:
+						for datum in adjusted_data:
+							fp.write(str(datum)+' ')
+						print adjusted_data, object_data[4]
+						fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
             #if annotation file not empty
             #save cropped image name in train.txt file and cropped image
             else:
-	        if not empty:
-	            with open(filename_train, 'a') as fp:
-                	fp.write(subname+'\n')
-                    cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
+            	if not empty:
+            		with open(filename_train, 'a') as fp:
+            			fp.write(subname+'\n')
+            		cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
     elif train_or_test == 'test': #full image with all annotations
         empty = True
         #if Annotation file exists, remove
