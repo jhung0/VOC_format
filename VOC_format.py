@@ -14,10 +14,9 @@ Usage: python VOC_format.py [Output directory] [Image files]
 Includes flags for different options. 
 '''
 
-
 #extract data from xml file
 def extractObjectData(obj):
-    deleted = int(obj.find('deleted').text)
+	deleted = int(obj.find('deleted').text)
     label = obj.find('name').text
     difficult = False
     #if label is empty, skip
@@ -47,7 +46,13 @@ def extractObjectData(obj):
 	
     if xmin >= xmax or ymin >= ymax:
         raise Exception('object data ', xmin, ymin, xmax, ymax)
-	return xmin, ymin, xmax, ymax
+    return xmin, ymin, xmax, ymax
+
+#decide whether the file should be in training or test set
+def chooseTrainOrTest(filenum, filename):
+	if filenum < 200:
+        return 'train'
+    return 'test'
 
 #if file exists, remove
 def removeIfExists(output_dir, subdir, name): 
@@ -83,31 +88,30 @@ for train_or_test in ['train', 'test']:
 #for each image, subsample image and for each subimage, create associated file with bounding box and class information
 filenum = 1
 for filename in argv[2:]:
-    #choose whether file is part of training or testing set
-    if filenum < 200:
-        train_or_test = 'train'
-    else:
-        train_or_test = 'test'
-    filenum += 1
-    filename_train = os.path.join(output_dir, 'ImageSets',train_or_test+'.txt')
-
-    file_, file_extension = os.path.splitext(filename)
+	file_, file_extension = os.path.splitext(filename)
     print file_, file_extension
     img = Image.open(filename)
+
+    #choose whether file is part of training or testing set
+    train_or_test = chooseTrainOrTest(filenum, file_)
+    
+    filenum += 1
+    filename_train = os.path.join(output_dir, 'ImageSets',train_or_test+'.txt')
 
     width = img.size[0]
     height = img.size[1]
 
     #get associated xml file and parse for all objects
     path_collection = os.path.abspath(filename).split('/Images/')
-    if os.path.isfile(os.path.join(path_collection[0], 'Annotations', path_collection[1].split(file_extension)[0]+'.xml')):
-        filename_xml = os.path.join(path_collection[0], 'Annotations', path_collection[1].split(file_extension)[0]+'.xml')
-    elif os.path.isfile(os.path.join(path_collection[0], 'Annotations', path_collection[1].split(file_extension)[0].upper()+'.xml')):
-        filename_xml = os.path.join(path_collection[0], 'Annotations', path_collection[1].split(file_extension)[0].upper()+'.xml')
-    elif os.path.isfile(os.path.join(path_collection[0], 'Annotations', path_collection[1].split(file_extension)[0].lower()+'.xml')):
-        filename_xml = os.path.join(path_collection[0], 'Annotations', path_collection[1].split(file_extension)[0].lower()+'.xml')
+    path_annotations = os.path.join(path_collection[0], 'Annotations')
+    xml_name = path_collection[1].split(file_extension)[0]
+    for name in [xml_name, xml_name.upper(), xml_name.lower()]:
+    	try_filename_xml = os.path.join(path_annotations, name+'.xml')
+    	if os.path.isfile(try_filename_xml):
+    		filename_xml = try_filename_xml
+    		break
     else:
-        raise Exception('%s xml file not found'%(path_collection[1].split(file_extension)[0]))
+        raise Exception('%s xml file not found'%(xml_name))
         
     data = []
     
