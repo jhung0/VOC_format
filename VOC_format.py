@@ -13,8 +13,6 @@ Randomly takes X subsamples of full image and outputs in other folder
 Usage: python VOC_format.py [Output directory] [Image files]
 Includes flags for different options. 
 '''
-#adjust data after taking subimage
-def adjustObjectData():
 
 #extract data from xml file
 def extractObjectData(obj):
@@ -126,7 +124,7 @@ for filename in argv[2:]:
     if train_or_test  == 'train':
     	#if ROTATE, double the number of subimages
     	if FROTATE:
-    		num_subimages = 2*num_subimages
+    		num_subimages = 8*num_subimages
     		
         for sub in range(num_subimages):
             print sub
@@ -139,46 +137,45 @@ for filename in argv[2:]:
             print('top left corner coordinates:%s,%s'%(randx, randy))
             #save cropped image
             cropped = img.crop((randx, randy, randx+small_size, randy+small_size))
-            
-            #if ROTATE, after processing the original subimage, rotate by 90 and process
-            if ROTATE and sub%2 == 1:
-            	cropped = cropped.rotate(90)
             	
             #if Annotation file exists, remove
             filename_annotation = removeIfExists(output_dir, 'Annotations', subname+'.txt')
             
             #write and save annotation file, only including data that are within the bounds of the subimage
-            edge_data = []
-            inside_data = []
-            adjustObjectData(filename_annotation, data, randx, randy, FROTATE, UNCERTAIN_CLASS)
             for object_data in data:
             	#print object_data
                 adjusted_data = np.array(object_data[0:4]).copy()
                 #adjust according to top left corner
                 adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
-                
-	            #inside image
-	            if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): 
-	            	#if object is uncertain, and there is no uncertain class, then don't consider the subimage
+				
+				#inside image
+				if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): 
+					#if object is uncertain, and there is no uncertain class, then don't consider the subimage
 					if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
-					    break
+						break
 					empty = False
-					inside_data.append(adjusted_data)
-					#if ROTATE, rotate adjusted_data
-					if ROTATE:
-						adjusted_data = np.array([adjusted_data[1], adjusted_data[0], adjusted_data[3], adjusted_data[2] ])
+					#if FROTATE, flip/rotate according to subimage number and change adjusted_data
+					if FROTATE:
+						for ii in range(8,0,-1):
+							if sub%ii == ii-1:
+								for _ in range(1, int(sub/2)):
+									cropped = cropped.rotate(90)
+									adjusted_data = np.array([adjusted_data[2], adjusted_data[3], small_size - adjusted_data[1], small_size - adjusted_data[0]])
+							if sub%2 == 1:
+								cropped = cropped.transpose(Image.FLIP_LEFT_RIGHT)
+								adjusted_data = np.array([small_size - adjusted_data[1], small_size - adjusted_data[0], adjusted_data[2], adjusted_data[3]])
 					with open(filename_annotation, 'a') as fp:
 						for datum in adjusted_data:
 							fp.write(str(datum)+' ')
 						print adjusted_data, object_data[4]
 						fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
-            #if annotation file not empty
-            #save cropped image name in train.txt file and cropped image
-            else:
-            	if not empty:
-            		with open(filename_train, 'a') as fp:
-            			fp.write(subname+'\n')
-            		cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
+			#if annotation file not empty
+			#save cropped image name in train.txt file and cropped image
+			else:
+				if not empty:
+					with open(filename_train, 'a') as fp:
+						fp.write(subname+'\n')
+					cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
     elif train_or_test == 'test': #full image with all annotations
         empty = True
         #if Annotation file exists, remove
