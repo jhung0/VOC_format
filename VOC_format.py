@@ -149,10 +149,10 @@ for filename in argv[2:]:
 			for ii in range(8,0,-1):
 				if sub%8 == ii-1:
 					for _ in range(0, int((sub%8)/2)):
-						#print 'rotate'
+						print 'rotate'
 						cropped = cropped.rotate(90)
 			if sub%2 == 1:
-				#print 'flip'
+				print 'flip'
 				cropped = cropped.transpose(Image.FLIP_LEFT_RIGHT)
 
 		#write and save annotation file, only including data that are within the bounds of the subimage
