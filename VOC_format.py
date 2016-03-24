@@ -85,6 +85,10 @@ for name in ['Annotations', 'ImageSets', 'Images']:
 for train_or_test in ['train', 'test']:
     filename_train = removeIfExists(output_dir, 'ImageSets', train_or_test+'.txt')
 
+#if FROTATE, double the number of subimages
+if FROTATE:
+    num_subimages = 8*num_subimages
+    		
 #for each image, subsample image and for each subimage, create associated file with bounding box and class information
 filenum = 1
 for filename in argv[2:]:
@@ -125,10 +129,6 @@ for filename in argv[2:]:
         data.append(object_data)
     
     if train_or_test  == 'train':
-    	#if ROTATE, double the number of subimages
-    	if FROTATE:
-    		num_subimages = 8*num_subimages
-    		
         for sub in range(num_subimages):
         	print sub
         	empty = True
