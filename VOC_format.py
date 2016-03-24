@@ -88,7 +88,7 @@ for train_or_test in ['train', 'test']:
 #for each image, subsample image and for each subimage, create associated file with bounding box and class information
 filenum = 1
 for filename in argv[2:]:
-	file_, file_extension = os.path.splitext(filename)
+    file_, file_extension = os.path.splitext(filename)
     print file_, file_extension
     img = Image.open(filename)
 
