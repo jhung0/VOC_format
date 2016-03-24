@@ -15,6 +15,7 @@ Usage: python remove_images.py [directory where .tif images are] [directory wher
 '''
 replacement_dir = argv[1]
 extension = '.tif'
+backup_extension = '.jpg'
 #for each image in the current directory replace it with an image of the same name (different extension) from the replacement directory
 input_dir = argv[2]
 
@@ -23,11 +24,11 @@ for filename in os.listdir(input_dir):
     print file_, file_extension
 
     #copy
-    fname = os.path.join(replacement_dir, file_ + extension)
-    if os.path.isfile(fname):
-        shutil.copy(fname, input_dir)
-    elif os.path.isfile(os.path.join(replacement_dir, file_.upper() + extension)):
-        shutil.copy(os.path.join(replacement_dir, file_.upper() + extension), input_dir)
+    for fname in [file_ + extension, file_.upper() + extension, file_.lower() + extension, file_ + backup_extension]: 
+        full_fname = os.path.join(replacement_dir, fname)
+        if os.path.isfile(full_fname):
+            shutil.copy(full_fname, input_dir)
+            break
     else:
         #raise Exception('%s not found in directory'%(file_+extension))
         print '%s not found in directory'%(file_+extension)
