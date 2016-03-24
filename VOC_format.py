@@ -146,33 +146,33 @@ for filename in argv[2:]:
 		
 		#write and save annotation file, only including data that are within the bounds of the subimage
 		for object_data in data:
-		    #print object_data
-		adjusted_data = np.array(object_data[0:4]).copy()
-		#adjust according to top left corner
-		adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
+			#print object_data
+			adjusted_data = np.array(object_data[0:4]).copy()
+			#adjust according to top left corner
+			adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
 		
-		#inside image
-		if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): 
-			#print 'adjusted', adjusted_data
-			#if object is uncertain, and there is no uncertain class, then don't consider the subimage
-			if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
-				break
-			empty = False
-			#if FROTATE, flip/rotate according to subimage number and change adjusted_data
-			if FROTATE:
-				for ii in range(8,0,-1):
-					if sub%ii == ii-1:
-						for _ in range(1, int(sub/2)):
-							cropped = cropped.rotate(90)
-							adjusted_data = np.array([adjusted_data[2], adjusted_data[3], small_size - adjusted_data[1], small_size - adjusted_data[0]])
-					if sub%2 == 1:
-						cropped = cropped.transpose(Image.FLIP_LEFT_RIGHT)
-						adjusted_data = np.array([small_size - adjusted_data[1], small_size - adjusted_data[0], adjusted_data[2], adjusted_data[3]])
-			with open(filename_annotation, 'a') as fp:
-				for datum in adjusted_data:
-					fp.write(str(datum)+' ')
-				print adjusted_data, object_data[4]
-				fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
+			#inside image
+			if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): 
+				#print 'adjusted', adjusted_data
+				#if object is uncertain, and there is no uncertain class, then don't consider the subimage
+				if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
+					break
+				empty = False
+				#if FROTATE, flip/rotate according to subimage number and change adjusted_data
+				if FROTATE:
+					for ii in range(8,0,-1):
+						if sub%ii == ii-1:
+							for _ in range(1, int(sub/2)):
+								cropped = cropped.rotate(90)
+								adjusted_data = np.array([adjusted_data[2], adjusted_data[3], small_size - adjusted_data[1], small_size - adjusted_data[0]])
+						if sub%2 == 1:
+							cropped = cropped.transpose(Image.FLIP_LEFT_RIGHT)
+							adjusted_data = np.array([small_size - adjusted_data[1], small_size - adjusted_data[0], adjusted_data[2], adjusted_data[3]])
+				with open(filename_annotation, 'a') as fp:
+					for datum in adjusted_data:
+						fp.write(str(datum)+' ')
+					print adjusted_data, object_data[4]
+					fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
 	        #if annotation file not empty
     		#save cropped image name in train.txt file and cropped image
 	    	else:
