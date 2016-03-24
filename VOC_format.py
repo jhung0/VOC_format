@@ -151,9 +151,9 @@ for filename in argv[2:]:
 					for _ in range(0, int((sub%8)/2)):
 						#print 'rotate'
 						cropped = cropped.rotate(90)
-				if sub%2 == 1:
-					#print 'flip'
-					cropped = cropped.transpose(Image.FLIP_LEFT_RIGHT)
+			if sub%2 == 1:
+				#print 'flip'
+				cropped = cropped.transpose(Image.FLIP_LEFT_RIGHT)
 
 		#write and save annotation file, only including data that are within the bounds of the subimage
 		for object_data in data:
