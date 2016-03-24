@@ -161,7 +161,7 @@ for filename in argv[2:]:
 				#if FROTATE, flip/rotate according to subimage number and change adjusted_data
 				if FROTATE:
 					for ii in range(8,0,-1):
-						if sub%ii == ii-1:
+						if sub%8 == ii-1:
 							for _ in range(1, int(sub/2)):
 								cropped = cropped.rotate(90)
 								adjusted_data = np.array([adjusted_data[2], adjusted_data[3], small_size - adjusted_data[1], small_size - adjusted_data[0]])
