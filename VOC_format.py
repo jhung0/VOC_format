@@ -50,7 +50,7 @@ def extractObjectData(obj):
 
 #decide whether the file should be in training or test set
 def chooseTrainOrTest(filenum, filename):
-	if filenum < 200:
+    if filenum < 200:
         return 'train'
     return 'test'
 
