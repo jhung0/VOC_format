@@ -144,6 +144,16 @@ for filename in argv[2:]:
 		#if Annotation file exists, remove
 		filename_annotation = removeIfExists(output_dir, 'Annotations', subname+'.txt')
 		
+		#if FROTATE, flip/rotate according to subimage number 
+		if FROTATE:
+			for ii in range(8,0,-1):
+				if sub%8 == ii-1:
+					for _ in range(0, int((sub%8)/2)):
+						print 'rotate'
+						cropped = cropped.rotate(90)
+				if sub%2 == 1:
+					cropped = cropped.transpose(Image.FLIP_LEFT_RIGHT)
+
 		#write and save annotation file, only including data that are within the bounds of the subimage
 		for object_data in data:
 			#print object_data
@@ -158,18 +168,14 @@ for filename in argv[2:]:
 				if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
 					break
 				empty = False
-				#if FROTATE, flip/rotate according to subimage number and change adjusted_data
+				#if FROTATE, change adjusted_data
 				if FROTATE:
 					for ii in range(8,0,-1):
 						if sub%8 == ii-1:
 							for _ in range(0, int((sub%8)/2)):
-								print 'rotate'
-								cropped = cropped.rotate(90)
 								adjusted_data = np.array([adjusted_data[2], adjusted_data[3], small_size - adjusted_data[1], small_size - adjusted_data[0]])
-						if sub%2 == 1:
-							print 'flip'
-							cropped = cropped.transpose(Image.FLIP_LEFT_RIGHT)
-							adjusted_data = np.array([small_size - adjusted_data[1], small_size - adjusted_data[0], adjusted_data[2], adjusted_data[3]])
+					if sub%2 == 1:
+						adjusted_data = np.array([small_size - adjusted_data[1], small_size - adjusted_data[0], adjusted_data[2], adjusted_data[3]])
 				with open(filename_annotation, 'a') as fp:
 					for datum in adjusted_data:
 						fp.write(str(datum)+' ')
