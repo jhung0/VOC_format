@@ -24,6 +24,10 @@ for filename in os.listdir(input_dir):
     print file_, file_extension
     if int(file_.split('-')[-1]) >= first_file_num:
       url = 'http://labelme2.csail.mit.edu/Release3.0/Annotations/users/jane24///54gamplusring_20151223_outlines/'+file_+extension
+      try:
+        os.remove(os.path.join(input_dir,file_+extension))
+      except:
+        print 'file not there'
       os.system('wget ' + url + ' -P ' + input_dir)
     '''
     #copy
