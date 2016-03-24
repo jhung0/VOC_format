@@ -23,7 +23,7 @@ def extractObjectData(obj):
     #if IGNORE_EDGE_CELLS is true and label begins with e, skip object (CONTINUE NOT BREAK)
     #if label starts with e (cell is on the edge), relabel without e
     if deleted or (not label) or (label[0] == 'e'):
-    	continue
+    	raise Exception
         
     if not DIFFICULT and label[0] == 'd':
         label = 'uncertain'
@@ -117,7 +117,10 @@ for filename in argv[2:]:
     tree = ET.parse(filename_xml)
     root = tree.getroot()
     for obj in root.findall('object'):
-        xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
+    	try:
+    		xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
+        except:
+        	continue
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
         data.append(object_data)
     
