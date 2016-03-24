@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ET
 import operator
 import numpy as np
 import shutil
-import wget
+
 
 input_dir = argv[1]
 extension = '.xml'
@@ -24,7 +24,7 @@ for filename in os.listdir(input_dir):
     print file_, file_extension
     if int(file_.split('-')[-1]) >= first_file_num:
       url = 'http://labelme2.csail.mit.edu/Release3.0/Annotations/users/jane24///54gamplusring_20151223_outlines/'+file_+extension
-      filename = wget.download(url)
+      os.system('wget ' + url + ' -P ' + input_dir)
     '''
     #copy
     for fname in [file_ + extension, file_.upper() + extension, file_.lower() + extension, file_ + backup_extension]: 
