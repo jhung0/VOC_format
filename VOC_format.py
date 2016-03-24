@@ -46,7 +46,7 @@ def extractObjectData(obj):
 	
     if xmin >= xmax or ymin >= ymax:
         raise Exception('object data ', xmin, ymin, xmax, ymax)
-    return xmin, ymin, xmax, ymax
+    return xmin, ymin, xmax, ymax, label, difficult
 
 #decide whether the file should be in training or test set
 def chooseTrainOrTest(filenum, filename):
@@ -119,6 +119,7 @@ for filename in argv[2:]:
     for obj in root.findall('object'):
     	try:
     		xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
+    		print xmin, ymin, xmax, ymax, label, difficult
         except:
         	continue
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
