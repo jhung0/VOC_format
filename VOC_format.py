@@ -22,7 +22,7 @@ def extractObjectData(obj):
     #if label is empty, skip
     #if IGNORE_EDGE_CELLS is true and label begins with e, skip object (CONTINUE NOT BREAK)
     #if label starts with e (cell is on the edge), relabel without e
-    if deleted or not label or label[0] == 'e':
+    if deleted or (not label) or (label[0] == 'e'):
     	continue
         
     if not DIFFICULT and label[0] == 'd':
