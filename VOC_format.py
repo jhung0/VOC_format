@@ -119,7 +119,6 @@ for filename in argv[2:]:
     for obj in root.findall('object'):
     	try:
     		xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
-    		print xmin, ymin, xmax, ymax, label, difficult
         except:
         	continue
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
@@ -147,14 +146,14 @@ for filename in argv[2:]:
             
             #write and save annotation file, only including data that are within the bounds of the subimage
             for object_data in data:
-            	print object_data
+            	#print object_data
                 adjusted_data = np.array(object_data[0:4]).copy()
                 #adjust according to top left corner
                 adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
 
 		#inside image
 		if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): 
-			print 'adjusted', adjusted_data
+			#print 'adjusted', adjusted_data
 			#if object is uncertain, and there is no uncertain class, then don't consider the subimage
 			if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
 				break
