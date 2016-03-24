@@ -130,27 +130,27 @@ for filename in argv[2:]:
     		num_subimages = 8*num_subimages
     		
         for sub in range(num_subimages):
-            print sub
-            empty = True
-            subname = os.path.basename(file_)+'_'+str(sub)
+        	print sub
+        	empty = True
+        	subname = os.path.basename(file_)+'_'+str(sub)
             
-            #randomly choose top left corner of subimage
-            randx = random.randint(0, width-small_size)
-            randy = random.randint(0, height-small_size)
-            print('top left corner coordinates:%s,%s'%(randx, randy))
-            #save cropped image
-            cropped = img.crop((randx, randy, randx+small_size, randy+small_size))
-            	
-            #if Annotation file exists, remove
-            filename_annotation = removeIfExists(output_dir, 'Annotations', subname+'.txt')
-            
-            #write and save annotation file, only including data that are within the bounds of the subimage
-            for object_data in data:
-            	#print object_data
-                adjusted_data = np.array(object_data[0:4]).copy()
-                #adjust according to top left corner
-                adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
-
+		#randomly choose top left corner of subimage
+		randx = random.randint(0, width-small_size)
+		randy = random.randint(0, height-small_size)
+		print('top left corner coordinates:%s,%s'%(randx, randy))
+		#save cropped image
+		cropped = img.crop((randx, randy, randx+small_size, randy+small_size))
+		
+		#if Annotation file exists, remove
+		filename_annotation = removeIfExists(output_dir, 'Annotations', subname+'.txt')
+		
+		#write and save annotation file, only including data that are within the bounds of the subimage
+		for object_data in data:
+		    #print object_data
+		adjusted_data = np.array(object_data[0:4]).copy()
+		#adjust according to top left corner
+		adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
+		
 		#inside image
 		if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): 
 			#print 'adjusted', adjusted_data
@@ -173,13 +173,13 @@ for filename in argv[2:]:
 					fp.write(str(datum)+' ')
 				print adjusted_data, object_data[4]
 				fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
-	#if annotation file not empty
-	#save cropped image name in train.txt file and cropped image
-	else:
-		if not empty:
-			with open(filename_train, 'a') as fp:
-				fp.write(subname+'\n')
-			cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
+	        #if annotation file not empty
+    		#save cropped image name in train.txt file and cropped image
+	    	else:
+	    		if not empty:
+	    			with open(filename_train, 'a') as fp:
+	    				fp.write(subname+'\n')
+	    			cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
     elif train_or_test == 'test': #full image with all annotations
         empty = True
         #if Annotation file exists, remove
