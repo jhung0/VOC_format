@@ -8,8 +8,10 @@ import xml.etree.ElementTree as ET
 import operator
 import numpy as np
 from scipy import stats
+from shutil import copyfile
 '''
 Takes full images from LabelMe format and outputs them in VOC format in other folder
+All labelled objects are labelled cell, else background
 Usage: python VOC_format2.py [Output directory] [Image files]
 
 '''
@@ -30,12 +32,15 @@ def extractObjectData(obj):
     elif label[0] == 'd':
         difficult = True
         label = label[1:]
+    #all labelled objects 
+    if label:
+	label = 'cell'
     try:
         box = obj.find('segm').find('box')
         x = [int(box.find('xmin').text), int(box.find('xmax').text)]
         y = [int(box.find('ymin').text), int(box.find('ymax').text)]
     except:
-        polygon = object.find('polygon')
+        polygon = obj.find('polygon')
         x = [int(pt.find('x').text) for pt in polygon.findall('pt')]
         y = [int(pt.find('y').text) for pt in polygon.findall('pt')]
 
@@ -43,7 +48,6 @@ def extractObjectData(obj):
     ymin = int(min(y))
     xmax = int(max(x))
     ymax = int(max(y))
-
     if xmin >= xmax or ymin >= ymax:
         raise Exception('object data ', xmin, ymin, xmax, ymax)
     return xmin, ymin, xmax, ymax, label, difficult
@@ -87,7 +91,7 @@ filenum = 1
 for filename in argv[2:]:
     file_, file_extension = os.path.splitext(filename)
     print file_, file_extension
-    img = Image.open(filename)
+    #img = Image.open(filename)
 
     #choose whether file is part of training or testing set
     train_or_test = chooseTrainOrTest(filenum, file_)
@@ -95,8 +99,8 @@ for filename in argv[2:]:
     filenum += 1
     filename_imageset = os.path.join(output_dir, 'ImageSets', train_or_test + '.txt')
 
-    width = img.size[0]
-    height = img.size[1]
+    #width = img.size[0]
+    #height = img.size[1]
 
     #get associated xml file and parse for all objects
     path_collection = os.path.abspath(filename).split('/Images/')
@@ -109,7 +113,6 @@ for filename in argv[2:]:
     		break
     else:
         raise Exception('%s xml file not found'%(xml_name))
-
     data = []
     tree = ET.parse(filename_xml)
     root = tree.getroot()
@@ -140,7 +143,9 @@ for filename in argv[2:]:
             else:
                 fp.write('\n')
 
-    if not empty:
-        with open(filename_imageset, 'a') as fp:
-            fp.write(name+'\n')
-        img.save(os.path.join(output_dir, 'Images', name+file_extension))
+    #if not empty:
+    print 'imageset', filename_imageset
+    with open(filename_imageset, 'a') as fp:
+        fp.write(name+'\n')
+    copyfile(filename, os.path.join(output_dir, 'Images', name+file_extension))
+    #img.save(os.path.join(output_dir, 'Images', name+file_extension))
