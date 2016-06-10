@@ -138,8 +138,6 @@ for filename in argv[2:]:
         with open(filename_annotation, 'a') as fp:
             for datum in object_data:
                 fp.write(str(datum)+' ')
-            if train_or_test == 'train':
-                fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
             else:
                 fp.write('\n')
 
