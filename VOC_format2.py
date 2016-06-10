@@ -129,6 +129,9 @@ for filename in argv[2:]:
 
     for object_data in data:
         empty = False
+        #if test (where test images are not annotated), don't include annotations
+        if train_or_test == 'test':
+            break
         with open(filename_annotation, 'a') as fp:
             for datum in object_data:
                 fp.write(str(datum)+' ')
