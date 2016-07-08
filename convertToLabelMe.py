@@ -69,9 +69,9 @@ for file_index, file_ in enumerate(test_files):
         for i in range(4):
             pt_ = ET.SubElement(polygon_, 'pt')
             x_ = ET.SubElement(pt_, 'x')
-            x_.text = box[(2*i)%4]
+            x_.text = str(box[(2*i)%4])
             y_ = ET.SubElement(pt_, 'y')
-            y_.text = box[i + (i+1)%2]
+            y_.text = str(box[i + (i+1)%2])
 
     tree.write(LabelMe_file)
     os.chmod(LabelMe_file, 0o777)
