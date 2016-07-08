@@ -3,8 +3,8 @@ import os
 
 #get test image filenames
 test_files = []
-data_path = '/home/ubuntu/try1/data'
-ImageSet_test = os.path.join(data_path, 'ImageSets', 'test.txt') #path of test set file
+data_path = '/home/ubuntu/try1'
+ImageSet_test = os.path.join(data_path, 'data', 'ImageSets', 'test.txt') #path of test set file
 with open(ImageSet_test) as f:
     for file_ in f.readlines():
         test_files.append(file_.strip())
