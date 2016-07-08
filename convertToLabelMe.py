@@ -58,7 +58,7 @@ for file_index, file_ in enumerate(test_files):
         ispartof_ = ET.SubElement(parts_, 'ispartof')
 
         date_ = ET.SubElement(object_, 'date')
-        date_.text = str(DET)
+        date_.text = '08-Jul-2016 07:06:09' #str(DET)
         id_ = ET.SubElement(object_, 'id')
         id_.text = str(index)
         type_ = ET.SubElement(object_, 'type')
