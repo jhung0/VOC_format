@@ -58,9 +58,9 @@ for file_index, file_ in enumerate(test_files):
         ispartof_ = ET.SubElement(parts_, 'ispartof')
 
         date_ = ET.SubElement(object_, 'date')
-        date_.text = DET
+        date_.text = str(DET)
         id_ = ET.SubElement(object_, 'id')
-        id_.text = index
+        id_.text = str(index)
         type_ = ET.SubElement(object_, 'type')
         type_.text = 'bounding_box'
         polygon_ = ET.SubElement(object_, 'polygon')
