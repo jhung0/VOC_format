@@ -33,7 +33,7 @@ for file_index, file_ in enumerate(test_files):
                         filtered_boxes.append([float(i) for i in line_list[2:]])
 
     #make LabelMe xml annotation file
-    LabelMe_file = os.path.join(LabelMe_annotation_dir, file_, '.xml')
+    LabelMe_file = os.path.join(LabelMe_annotation_dir, 'g16_t1_up', file_+'.xml')
     #clear existing annotations
     tree = ET.parse(LabelMe_file)
     root = tree.getroot()
