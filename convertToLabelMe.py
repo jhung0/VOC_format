@@ -70,7 +70,7 @@ for file_index, file_ in enumerate(test_files):
             x_ = ET.SubElement(pt_, 'x')
             x_.text = box[(2*i)%4]
             y_ = ET.SubElement(pt_, 'y')
-            y_.text = box[i + (i+1)%2]]
+            y_.text = box[i + (i+1)%2]
 
     tree.write(LabelMe_file)
     os.chmod(LabelMe_file, 0o777)
