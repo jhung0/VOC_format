@@ -33,11 +33,13 @@ for file_index, file_ in enumerate(test_files):
                         filtered_boxes.append([float(i) for i in line_list[2:]])
 
     #make LabelMe xml annotation file
-    LabelMe_file = os.path.join(LabelMe_annotation_dir, 'g16_t1_up', file_+'.xml')
+    image_dir = 'g16_t1_up'
+    LabelMe_file = os.path.join(LabelMe_annotation_dir, image_dir, file_+'.xml')
     print LabelMe_file
     #clear existing annotations
     tree = ET.parse(LabelMe_file)
     root = tree.getroot()
+    root.find('folder').text = image_dir
     for obj in root.findall('object'):
         root.remove(obj)
     #for each set of coordinates, create object instance
@@ -58,7 +60,7 @@ for file_index, file_ in enumerate(test_files):
         ispartof_ = ET.SubElement(parts_, 'ispartof')
 
         date_ = ET.SubElement(object_, 'date')
-        date_.text = '08-Jul-2016 07:06:09' #str(DET)
+        date_.text = str(DET)
         id_ = ET.SubElement(object_, 'id')
         id_.text = str(index)
         type_ = ET.SubElement(object_, 'type')
