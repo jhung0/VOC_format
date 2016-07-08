@@ -11,7 +11,7 @@ with open(ImageSet_test) as f:
 
 LabelMe_path = '/var/www/html/LabelMeAnnotationTool'
 LabelMe_annotation_dir = os.path.join(LabelMe_path, 'Annotations')
-DET =
+DET = 2943
 #create LabelMe xml file from detection coordinates
 classes = ['__background__', 'cell']
 THRESHOLD = 0.5
@@ -25,7 +25,7 @@ for file_index, file_ in enumerate(test_files):
         with open(os.path.join(path, detection_file), 'r') as f:
             for line in f.readlines():
                 line_list = line.split()
-                #if file name matches
+                #if file name matches test file
                 if line_list[0].lower() == file_.lower():
                     #if the detection has probability above the threshold
                     if float(line_list[1]) >= THRESHOLD:
