@@ -36,7 +36,7 @@ for file_index, file_ in enumerate(test_files):
     LabelMe_file = os.path.join(LabelMe_annotation_dir, 'g16_t1_up', file_+'.xml')
     print LabelMe_file
     #clear existing annotations
-    tree = ET.parse(LabelMe_file)
+    tree = ET.parse(file=LabelMe_file)
     root = tree.getroot()
     for obj in root.findall('object'):
         root.remove(obj)
