@@ -34,7 +34,7 @@ for file_index, file_ in enumerate(test_files):
 
     #make LabelMe xml annotation file
     LabelMe_file = os.path.join(LabelMe_annotation_dir, 'g16_t1_up', file_+'.xml')
-    print 'LabelMe_file'
+    print LabelMe_file
     #clear existing annotations
     tree = ET.parse(LabelMe_file)
     root = tree.getroot()
