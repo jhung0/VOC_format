@@ -21,7 +21,7 @@ for file_index, file_ in enumerate(test_files):
     for cls in range(1,len(classes)):
         filtered_boxes=[]
 
-        detection_file = DET + '_det_test_'+classes[cls]+'.txt'
+        detection_file = str(DET) + '_det_test_'+classes[cls]+'.txt'
         with open(os.path.join(path, detection_file), 'r') as f:
             for line in f.readlines():
                 line_list = line.split()
