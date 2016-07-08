@@ -34,6 +34,7 @@ for file_index, file_ in enumerate(test_files):
 
     #make LabelMe xml annotation file
     LabelMe_file = os.path.join(LabelMe_annotation_dir, 'g16_t1_up', file_+'.xml')
+    print 'LabelMe_file'
     #clear existing annotations
     tree = ET.parse(LabelMe_file)
     root = tree.getroot()
@@ -71,6 +72,6 @@ for file_index, file_ in enumerate(test_files):
             x_.text = box[(2*i)%4]
             y_ = ET.SubElement(pt_, 'y')
             y_.text = box[i + (i+1)%2]
-    print 'LabelMe_file'
+
     tree.write(LabelMe_file)
     os.chmod(LabelMe_file, 0o777)
