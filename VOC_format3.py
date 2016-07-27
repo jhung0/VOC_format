@@ -9,8 +9,9 @@ import operator
 import numpy as np
 from scipy import stats
 '''
-Randomly takes X subsamples of full image and outputs in other folder
-Usage: python VOC_format.py [Output directory] [Image files]
+Takes full images from LabelMe format and outputs them in VOC format in other folder
+All labelled objects are labelled cell, else background
+Usage: python VOC_format3.py [Output directory] [Image files]
 Includes flags for different options. 
 '''
 
@@ -27,9 +28,14 @@ def extractObjectData(obj):
         
     if not DIFFICULT and label[0] == 'd':
         label = 'uncertain'
+    elif label == 'a':
+        difficult = True
     elif label[0] == 'd':
         difficult = True
         label = label[1:]
+    #all labelled objects 
+    if label:
+	label = 'cell'
     try:
         box = obj.find('segm').find('box')
         x = [int(box.find('xmin').text), int(box.find('xmax').text)]
@@ -50,7 +56,7 @@ def extractObjectData(obj):
 
 #decide whether the file should be in training or test set
 def chooseTrainOrTest(filenum, filename):
-    if filenum < 300:
+    if filenum > -1:
         return 'train'
     return 'test'
 
@@ -66,7 +72,6 @@ def removeIfExists(output_dir, subdir, name):
 
 DIFFICULT = True #whether there's a difficult tag
 FROTATE = True #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
-UNCERTAIN_CLASS = False #don't have uncertain class, either ignore or tag as difficult
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 print 'output director', output_dir
@@ -164,10 +169,6 @@ for filename in argv[2:]:
 		
 			#inside image
 			if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): 
-				#print 'adjusted', adjusted_data
-				#if object is uncertain, and there is no uncertain class, then don't consider the subimage
-				if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
-					break
 				empty = False
 				#if FROTATE, change adjusted_data
 				if FROTATE:
