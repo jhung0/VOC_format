@@ -9,7 +9,7 @@ import operator
 import numpy as np
 from scipy import stats
 '''
-Takes full images from LabelMe format and outputs them in VOC format in other folder
+Takes full images (from training set) from LabelMe format and outputs them in VOC format in other folder
 All labelled objects are labelled cell, else background
 Usage: python VOC_format3.py [Output directory] [Image files]
 Includes flags for different options. 
@@ -74,6 +74,7 @@ DIFFICULT = True #whether there's a difficult tag
 FROTATE = True #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
+image_dir = argv[2:]
 print 'output director', output_dir
 num_subimages = 50
 print 'number of subimages (not including rotations)', num_subimages
@@ -96,7 +97,7 @@ if FROTATE:
     		
 #for each image, subsample image and for each subimage, create associated file with bounding box and class information
 filenum = 1
-for filename in argv[2:]:
+for filename in image_dir:
     file_, file_extension = os.path.splitext(filename)
     print file_, file_extension
     img = Image.open(filename)
@@ -191,20 +192,4 @@ for filename in argv[2:]:
 	    			with open(filename_train, 'a') as fp:
 	    				fp.write(subname+'\n')
 	    			cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
-    elif train_or_test == 'test': #full image with all annotations
-        empty = True
-        #if Annotation file exists, remove
-        name = os.path.basename(file_)
-        filename_annotation = removeIfExists(output_dir, 'Annotations', name+'.txt')
-        
-        for object_data in data:
-            empty = False
-            with open(filename_annotation, 'a') as fp:
-                for datum in object_data:
-                    fp.write(str(datum)+' ')
-                fp.write('\n')     
-        if not empty:
-            with open(filename_train, 'a') as fp:
-                fp.write(name+'\n')
-            img.save(os.path.join(output_dir, 'Images', name+file_extension))
 
