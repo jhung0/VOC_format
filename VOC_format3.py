@@ -44,7 +44,7 @@ def extractObjectData(obj):
         for pt in polygon.findall('pt'):
         	for ppx in pt.findall('x'):
         		print type(ppx.text)
-        		print ppx.text, len(ppx.text)
+        		print ppx.text, float(ppx.text)
         
         x = [int(px.text) for px in pt.findall('x') for pt in polygon.findall('pt')]
         y = [int(py.text) for py in pt.findall('y') for pt in polygon.findall('pt')]
