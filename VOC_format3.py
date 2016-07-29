@@ -127,7 +127,9 @@ for filename in image_dir:
         raise Exception('%s xml file not found'%(xml_name))
         
     data = []
+    print filename_xml
     tree = ET.parse(filename_xml)
+    print tree
     root = tree.getroot()
     for obj in root.findall('object'):
     	try:
