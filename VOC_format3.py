@@ -52,7 +52,7 @@ def extractObjectData(obj):
 	
     if xmin >= xmax or ymin >= ymax:
         raise Exception('object data ', xmin, ymin, xmax, ymax)
-    print label, xmin, ymin, xmax, ymax
+    print 'extract: ', label, xmin, ymin, xmax, ymax
     return xmin, ymin, xmax, ymax, label, difficult
 
 #decide whether the file should be in training or test set
