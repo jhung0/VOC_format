@@ -42,9 +42,7 @@ def extractObjectData(obj):
         polygon = obj.find('polygon')
         print 'polygon', polygon.findall('pt')
         for pt in polygon.findall('pt'):
-        	p1 = pt.get('x')
-        	print p1
-        	print int(p1)
+        	print p1.findall('x')
         print [int(pt.find('x').text) for pt in polygon.findall('pt')]
         x = [int(pt.find('x').text) for pt in polygon.findall('pt')]
         y = [int(pt.find('y').text) for pt in polygon.findall('pt')]
