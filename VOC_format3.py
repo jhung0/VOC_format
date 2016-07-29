@@ -17,6 +17,7 @@ Includes flags for different options.
 
 #extract data from xml file
 def extractObjectData(obj):
+    print obj
     deleted = int(obj.find('deleted').text)
     label = obj.find('name').text
     difficult = False
@@ -25,7 +26,7 @@ def extractObjectData(obj):
     #if label starts with e (cell is on the edge), relabel without e
     if deleted or (not label) or (label[0] == 'e'):
     	raise Exception
-        
+    print 'not deleted'
     if not DIFFICULT and label[0] == 'd':
         label = 'uncertain'
     elif label == 'a':
@@ -33,6 +34,7 @@ def extractObjectData(obj):
     elif label[0] == 'd':
         difficult = True
         label = label[1:]
+    print difficult
     #all labelled objects 
     if label:
 	label = 'cell'
@@ -130,10 +132,8 @@ for filename in image_dir:
     data = []
     tree = ET.parse(filename_xml)
     root = tree.getroot()
-    print root
-    print root.findall('object')
+
     for obj in root.findall('object'):
-    	print 'object'
     	try:
     		xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
         except:
