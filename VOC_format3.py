@@ -195,4 +195,5 @@ for filename in image_dir:
 	    			with open(filename_train, 'a') as fp:
 	    				fp.write(subname+'\n')
 	    			cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
+	    			print os.path.join(output_dir, 'Images', subname+file_extension)
 
