@@ -40,13 +40,15 @@ def extractObjectData(obj):
         y = [int(box.find('ymin').text), int(box.find('ymax').text)]
     except:
         polygon = obj.find('polygon')
-        print 'polygon', polygon.findall('pt')
+        x = []
+        y = []
         for pt in polygon.findall('pt'):
-        	for ppx in pt.findall('x'):
-        		print float(ppx.text), int(float(ppx.text))
-        
-        x = [int(float(px.text)) for px in pt.findall('x') for pt in polygon.findall('pt')]
-        y = [int(float(py.text)) for py in pt.findall('y') for pt in polygon.findall('pt')]
+        	for px in pt.findall('x'):
+        		x.extend([int(float(px.text))])
+        	for py in pt.findall('y'):
+        		y.extend([int(float(py.text))])
+        #x = [int(float(px.text)) for px in pt.findall('x') for pt in polygon.findall('pt')]
+        #y = [int(float(py.text)) for py in pt.findall('y') for pt in polygon.findall('pt')]
     print x, y
     xmin = int(min(x))
     ymin = int(min(y))
