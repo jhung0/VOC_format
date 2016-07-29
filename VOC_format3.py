@@ -90,8 +90,6 @@ for name in ['Annotations', 'Images', 'ImageSets']:
     	clear_dir = os.path.join(output_dir, name, os.path.split(os.path.split(image_dir[0])[0])[-1])
     for f in os.listdir(clear_dir):
         os.remove(os.path.join(clear_dir, f))
-for name in ['ImageSets']:
-
 
 #if train.txt or test.txt exists, remove
 for train_or_test in ['train', 'test']:
