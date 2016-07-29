@@ -45,8 +45,8 @@ def extractObjectData(obj):
         	for ppx in pt.findall('x'):
         		print float(ppx.text), int(float(ppx.text))
         
-        x = [int(px.text) for px in pt.findall('x') for pt in polygon.findall('pt')]
-        y = [int(py.text) for py in pt.findall('y') for pt in polygon.findall('pt')]
+        x = [int(float(px.text)) for px in pt.findall('x') for pt in polygon.findall('pt')]
+        y = [int(float(py.text)) for py in pt.findall('y') for pt in polygon.findall('pt')]
     print x, y
     xmin = int(min(x))
     ymin = int(min(y))
