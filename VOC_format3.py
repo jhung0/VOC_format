@@ -130,7 +130,10 @@ for filename in image_dir:
     data = []
     tree = ET.parse(filename_xml)
     root = tree.getroot()
+    print root
+    print root.findall('object')
     for obj in root.findall('object'):
+    	print 'object'
     	try:
     		xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
         except:
