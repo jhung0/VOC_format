@@ -71,7 +71,7 @@ def removeIfExists(output_dir, subdir, name):
 
 
 DIFFICULT = True #whether there's a difficult tag
-FROTATE = True #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
+FROTATE = False #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 image_dir = argv[2:]
@@ -135,6 +135,7 @@ for filename in image_dir:
         except:
         	continue
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
+        print object_data
         data.append(object_data)
     
     if train_or_test  == 'train':
