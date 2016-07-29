@@ -41,21 +41,15 @@ def extractObjectData(obj):
         x = [int(box.find('xmin').text), int(box.find('xmax').text)]
         y = [int(box.find('ymin').text), int(box.find('ymax').text)]
     except:
-        polygon = object.find('polygon')
-        print polygon
-        print polygon.findall('pt')
-        print polygon.findall('pt')[0].find('x').text
+        polygon = obj.find('polygon')
         x = [int(pt.find('x').text) for pt in polygon.findall('pt')]
         y = [int(pt.find('y').text) for pt in polygon.findall('pt')]
-    print x, y
     xmin = int(min(x))
     ymin = int(min(y))
     xmax = int(max(x))
     ymax = int(max(y))
-    print xmin, ymin, xmax, ymax
     if xmin >= xmax or ymin >= ymax:
         raise Exception('object data ', xmin, ymin, xmax, ymax)
-    print 'extract: ', label, xmin, ymin, xmax, ymax
     return xmin, ymin, xmax, ymax, label, difficult
 
 #decide whether the file should be in training or test set
