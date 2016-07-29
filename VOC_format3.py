@@ -11,7 +11,7 @@ from scipy import stats
 '''
 Takes full images (from training set) from LabelMe format and outputs them in VOC format in other folder
 All labelled objects are labelled cell, else background
-Takes max(X subimages, # subimages to get to # of objects in image)
+Takes max(X subimages, # subimages to get to 2*# of objects in image)
 Usage: python VOC_format3.py [Output directory] [Image files]
 Includes flags for different options. 
 '''
@@ -144,7 +144,7 @@ for filename in image_dir:
     	total_num_objects = len(data)
     	num_objects = 0
     	sub = 0
-        while sub < num_subimages or num_objects < total_num_objects:
+        while sub < num_subimages or num_objects < 2*total_num_objects:
         	print num_objects, total_num_objects
         	print sub
         	sub += 1
