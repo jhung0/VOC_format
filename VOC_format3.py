@@ -17,7 +17,6 @@ Includes flags for different options.
 
 #extract data from xml file
 def extractObjectData(obj):
-    print obj
     deleted = int(obj.find('deleted').text)
     label = obj.find('name').text
     difficult = False
@@ -26,7 +25,6 @@ def extractObjectData(obj):
     #if label starts with e (cell is on the edge), relabel without e
     if deleted or (not label) or (label[0] == 'e'):
     	raise Exception
-    print 'not deleted'
     if not DIFFICULT and label[0] == 'd':
         label = 'uncertain'
     elif label == 'a':
@@ -34,7 +32,6 @@ def extractObjectData(obj):
     elif label[0] == 'd':
         difficult = True
         label = label[1:]
-    print difficult
     #all labelled objects 
     if label:
 	label = 'cell'
@@ -51,7 +48,7 @@ def extractObjectData(obj):
     ymin = int(min(y))
     xmax = int(max(x))
     ymax = int(max(y))
-	
+    print xmin, ymin, xmax, ymax
     if xmin >= xmax or ymin >= ymax:
         raise Exception('object data ', xmin, ymin, xmax, ymax)
     print 'extract: ', label, xmin, ymin, xmax, ymax
