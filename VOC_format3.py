@@ -35,6 +35,7 @@ def extractObjectData(obj):
     #all labelled objects 
     if label:
 	label = 'cell'
+    print label
     try:
         box = obj.find('segm').find('box')
         x = [int(box.find('xmin').text), int(box.find('xmax').text)]
@@ -43,7 +44,7 @@ def extractObjectData(obj):
         polygon = object.find('polygon')
         x = [int(pt.find('x').text) for pt in polygon.findall('pt')]
         y = [int(pt.find('y').text) for pt in polygon.findall('pt')]
-
+    print x, y
     xmin = int(min(x))
     ymin = int(min(y))
     xmax = int(max(x))
