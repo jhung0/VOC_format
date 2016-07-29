@@ -135,7 +135,6 @@ for filename in image_dir:
         	continue
         
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
-        print 'object data ', object_data
         data.append(object_data)
     
     if train_or_test  == 'train':
@@ -167,7 +166,7 @@ for filename in image_dir:
 
 		#write and save annotation file, only including data that are within the bounds of the subimage
 		for object_data in data:
-			#print object_data
+			print object_data
 			adjusted_data = np.array(object_data[0:4]).copy()
 			#adjust according to top left corner
 			adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
@@ -187,7 +186,7 @@ for filename in image_dir:
 				with open(filename_annotation, 'a') as fp:
 					for datum in adjusted_data:
 						fp.write(str(datum)+' ')
-					print adjusted_data, object_data[4]
+					print adjusted_data, object_data
 					fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
 	        #if annotation file not empty
     		#save cropped image name in train.txt file and cropped image
