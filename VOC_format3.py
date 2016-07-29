@@ -74,9 +74,9 @@ FROTATE = False #whether to (in addition to original subimages), flip and rotate
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 image_dir = argv[2:]
 print 'output director', output_dir
-num_subimages = 50
+num_subimages = 25
 print 'number of subimages (not including rotations)', num_subimages
-small_size = 224
+small_size = 448
 print 'size of subimages (px)', small_size
 
 #clear existing files
@@ -166,7 +166,7 @@ for filename in image_dir:
 
 		#write and save annotation file, only including data that are within the bounds of the subimage
 		for object_data in data:
-			print object_data
+			#print object_data
 			adjusted_data = np.array(object_data[0:4]).copy()
 			#adjust according to top left corner
 			adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
