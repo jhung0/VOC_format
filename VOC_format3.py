@@ -11,6 +11,7 @@ from scipy import stats
 '''
 Takes full images (from training set) from LabelMe format and outputs them in VOC format in other folder
 All labelled objects are labelled cell, else background
+Takes max(X subimages, # subimages to get to # of objects in image)
 Usage: python VOC_format3.py [Output directory] [Image files]
 Includes flags for different options. 
 '''
@@ -32,9 +33,6 @@ def extractObjectData(obj):
     elif label[0] == 'd':
         difficult = True
         label = label[1:]
-    #all labelled objects 
-    if label:
-	label = 'cell'
 
     try:
         box = obj.find('segm').find('box')
@@ -74,7 +72,7 @@ FROTATE = False #whether to (in addition to original subimages), flip and rotate
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 image_dir = argv[2:]
 print 'output director', output_dir
-num_subimages = 50
+num_subimages = 25
 print 'number of subimages (not including rotations)', num_subimages
 small_size = 448
 print 'size of subimages (px)', small_size
@@ -127,7 +125,7 @@ for filename in image_dir:
     data = []
     tree = ET.parse(filename_xml)
     root = tree.getroot()
-
+    data_infected = []
     for obj in root.findall('object'):
     	try:
     		xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
@@ -136,10 +134,19 @@ for filename in image_dir:
         
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
         data.append(object_data)
+        if label in ['tro', 'sch', 'gam', 'ring']:
+        	data_infected.extend([1])
+        else:
+        	data_infected.extend([0])
     
     if train_or_test  == 'train':
-        for sub in range(num_subimages):
+    	#infected_found = [0 for i in range(len(data))]
+    	total_num_objects = len(data)
+    	num_objects = 0
+    	sub = 0
+        while sub < num_subimages or num_objects < total_num_objects:
         	print sub
+        	sub += 1
         	empty = True
         	subname = os.path.basename(file_)+'_'+str(sub)
             
@@ -182,12 +189,12 @@ for filename in image_dir:
 								adjusted_data = np.array([adjusted_data[1], small_size - adjusted_data[2], adjusted_data[3], small_size - adjusted_data[0]])
 					if sub%2 == 1:
 						adjusted_data = np.array([small_size - adjusted_data[2], adjusted_data[1], small_size - adjusted_data[0],  adjusted_data[3]])
-				
+				num_objects += 1
 				with open(filename_annotation, 'a') as fp:
 					for datum in adjusted_data:
 						fp.write(str(datum)+' ')
 					print adjusted_data, object_data
-					fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
+					fp.write('cell'+' '+str(object_data[-1])+'\n')
 	        #if annotation file not empty
     		#save cropped image name in train.txt file and cropped image
 	    	else:
