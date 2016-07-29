@@ -82,9 +82,9 @@ small_size = 224
 print 'size of subimages (px)', small_size
 
 #clear existing files
-print image_dir[0], os.path.split(os.path.split(image_dir[0])[0])
+print image_dir[0], os.path.split(os.path.split(image_dir[0])[0])[-1]
 for name in ['Annotations', 'ImageSets', 'Images']:
-    clear_dir = os.path.join(output_dir, name, os.path.split(os.path.split(image_dir[0])[0]))
+    clear_dir = os.path.join(output_dir, name, os.path.split(os.path.split(image_dir[0])[0])[-1])
     for f in os.listdir(clear_dir):
         os.remove(os.path.join(clear_dir, f))
 
