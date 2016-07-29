@@ -33,7 +33,7 @@ def extractObjectData(obj):
     elif label[0] == 'd':
         difficult = True
         label = label[1:]
-
+    print label
     try:
         box = obj.find('segm').find('box')
         x = [int(box.find('xmin').text), int(box.find('xmax').text)]
@@ -47,7 +47,9 @@ def extractObjectData(obj):
     xmax = int(max(x))
     ymax = int(max(y))
     if xmin >= xmax or ymin >= ymax:
+    	print 'object data ', xmin, ymin, xmax, ymax
         raise Exception('object data ', xmin, ymin, xmax, ymax)
+    print 'success'
     return xmin, ymin, xmax, ymax, label, difficult
 
 #decide whether the file should be in training or test set
