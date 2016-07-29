@@ -135,7 +135,7 @@ for filename in image_dir:
         except:
         	continue
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
-        print object_data
+        print 'object data ', object_data
         data.append(object_data)
     
     if train_or_test  == 'train':
