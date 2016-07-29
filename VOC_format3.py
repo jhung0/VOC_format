@@ -52,6 +52,7 @@ def extractObjectData(obj):
 	
     if xmin >= xmax or ymin >= ymax:
         raise Exception('object data ', xmin, ymin, xmax, ymax)
+    print label, xmin, ymin, xmax, ymax
     return xmin, ymin, xmax, ymax, label, difficult
 
 #decide whether the file should be in training or test set
@@ -127,15 +128,14 @@ for filename in image_dir:
         raise Exception('%s xml file not found'%(xml_name))
         
     data = []
-    print filename_xml
     tree = ET.parse(filename_xml)
-    print tree
     root = tree.getroot()
     for obj in root.findall('object'):
     	try:
     		xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
         except:
         	continue
+        
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
         print 'object data ', object_data
         data.append(object_data)
