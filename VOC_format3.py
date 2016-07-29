@@ -145,6 +145,7 @@ for filename in image_dir:
     	num_objects = 0
     	sub = 0
         while sub < num_subimages or num_objects < total_num_objects:
+        	print num_objects, total_num_objects
         	print sub
         	sub += 1
         	empty = True
