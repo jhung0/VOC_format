@@ -109,8 +109,8 @@ if FROTATE:
     		
 #for each image, subsample image and for each subimage, create associated file with bounding box and class information
 filenum = 1
-for current_dir in all_slide_names:
-	current_dir = os.path.join(os.path.split(image_dir)[0],current_dir)
+for current_dir_ in all_slide_names:
+	current_dir = os.path.join(os.path.split(image_dir)[0], current_dir_)
 	for filename in os.listdir(current_dir):
 	    filename = os.path.join(current_dir, filename)
 	    file_, file_extension = os.path.splitext(filename)
@@ -218,7 +218,7 @@ for current_dir in all_slide_names:
 		    	else:
 		    		if not empty:
 		    			with open(filename_train, 'a') as fp:
-		    				fp.write(subname+'\n')
+		    				fp.write(current_dir_+'/'+subname+'\n')
 		    			cropped.save(os.path.join(output_dir, 'Images', s_name, subname+file_extension))
 		    			#cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
 	
