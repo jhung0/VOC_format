@@ -25,6 +25,8 @@ python VOC_format.py [output directory] [image files in Images]
 e.g. python VOC_format.py ../try1/data/ ../Downloads/collection/Images/users/jane24/54gamplusring_20151223_outlines/*
 *change output_dir, num_subimages, small_size, code under #choose whether file is part of training or testing set
 
+e.g. python VOC_format3.py ../try1/data/ /var/www/html/LabelMeAnnotationTool/Images/g16_t1_up g8_t1_up g7_t1_up
+
 VOC_format
     data
         Annotations
