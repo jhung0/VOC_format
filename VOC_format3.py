@@ -176,7 +176,7 @@ for current_dir in all_slide_names:
 			cropped = img.crop((randx, randy, randx+small_size, randy+small_size))
 			
 			#if Annotation file exists, remove
-			filename_annotation = removeIfExists(output_dir, 'Annotations', s_name, subname+'.txt')
+			filename_annotation = removeIfExists(output_dir, 'Annotations/'+s_name, subname+'.txt')
 			
 			#if FROTATE, flip/rotate according to subimage number 
 			if FROTATE:
