@@ -77,6 +77,7 @@ FROTATE = False #whether to (in addition to original subimages), flip and rotate
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 image_dir = argv[2]
 other_dir = argv[3:]
+print other_dir
 print 'output director', output_dir
 num_subimages = 25
 print 'number of subimages (not including rotations)', num_subimages
