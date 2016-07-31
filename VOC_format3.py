@@ -87,7 +87,7 @@ print 'size of subimages (px)', small_size
 #clear existing files
 slide_name = os.path.split(image_dir)[1]
 other_slide_names = [os.path.split(other_dir[i])[1] for i in range(len(other_dir))]
-all_slide_names = other_slide_names.extend(slide_name)
+all_slide_names = other_slide_names + [slide_name]
 print slide_name, other_slide_names, all_slide_names
 
 for name in ['Annotations', 'Images', 'ImageSets']:
