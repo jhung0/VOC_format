@@ -225,5 +225,5 @@ for current_dir_ in all_slide_names:
 		else:
 			with open(filename_imageset, 'a') as fp:
 				fp.write(name+'\n')
-			copyfile(filename, os.path.join(output_dir, 'Images', s_name, name+file_extension))
+			copyfile(filename, os.path.join(output_dir, 'Images', name+file_extension))
 	
