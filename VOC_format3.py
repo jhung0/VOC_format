@@ -101,7 +101,7 @@ for name in ['Annotations', 'Images', 'ImageSets']:
 
 #if train.txt or test.txt exists, remove
 for train_or_test in ['train', 'test']:
-    filename_train = removeIfExists(output_dir, 'ImageSets', train_or_test+'.txt')
+    filename_imageset = removeIfExists(output_dir, 'ImageSets', train_or_test+'.txt')
 
 #if FROTATE, double the number of subimages
 if FROTATE:
@@ -122,7 +122,7 @@ for current_dir_ in all_slide_names:
 	    train_or_test = chooseTrainOrTest(filenum, file_)
 	    
 	    filenum += 1
-	    filename_train = os.path.join(output_dir, 'ImageSets',train_or_test+'.txt')
+	    filename_imageset = os.path.join(output_dir, 'ImageSets',train_or_test+'.txt')
 	
 	    width = img.size[0]
 	    height = img.size[1]
@@ -217,8 +217,12 @@ for current_dir_ in all_slide_names:
 	    		#save cropped image name in train.txt file and cropped image
 		    	else:
 		    		if not empty:
-		    			with open(filename_train, 'a') as fp:
+		    			with open(filename_imageset, 'a') as fp:
 		    				fp.write(current_dir_+'/'+subname+'\n')
 		    			cropped.save(os.path.join(output_dir, 'Images', s_name, subname+file_extension))
 		    			#cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
+		else:
+			with open(filename_imageset, 'a') as fp:
+				fp.write(name+'\n')
+			copyfile(filename, os.path.join(output_dir, 'Images', s_name, name+file_extension))
 	
