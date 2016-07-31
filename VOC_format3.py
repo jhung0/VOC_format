@@ -112,7 +112,7 @@ filenum = 1
 for current_dir in all_slide_names:
 	current_dir = os.path.join(os.path.split(image_dir)[0],current_dir)
 	for filename in os.listdir(current_dir):
-		filename = os.path.join(current_dir, filename)
+	    filename = os.path.join(current_dir, filename)
 	    file_, file_extension = os.path.splitext(filename)
 	    s_name = os.path.split(current_dir)[1]
 	    print file_, file_extension, s_name
