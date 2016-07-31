@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import operator
 import numpy as np
 from scipy import stats
+from shutil import copyfile
 '''
 Takes full images (from training set) from LabelMe format and outputs them in VOC format in other folder
 All labelled objects are labelled cell, else background
