@@ -11,8 +11,8 @@ from scipy import stats
 '''
 Takes full images (from training set) from LabelMe format and outputs them in VOC format in other folder
 All labelled objects are labelled cell, else background
-Takes max(X subimages, # subimages to get to 2*# of objects in image)
-Usage: python VOC_format3.py [Output directory] [Image files]
+Takes max(X subimages, # subimages to get to 2*(# of objects in image))
+Usage: python VOC_format3.py [Output directory] [Image files] [Other directories]
 Includes flags for different options. 
 '''
 
@@ -74,7 +74,8 @@ DIFFICULT = True #whether there's a difficult tag
 FROTATE = False #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
-image_dir = argv[2:]
+image_dir = argv[2]
+other_dir = argv[3:]
 print 'output director', output_dir
 num_subimages = 25
 print 'number of subimages (not including rotations)', num_subimages
@@ -82,13 +83,17 @@ small_size = 448
 print 'size of subimages (px)', small_size
 
 #clear existing files
+slide_name = os.path.split(image_dir)[1]
+other_slide_names = [os.path.split(other_dir[i])[1] for i in range(len(other_dir))]
+print slide_name, other_slide_names
 for name in ['Annotations', 'Images', 'ImageSets']:
-    if name == 'ImageSets':
-    	clear_dir = os.path.join(output_dir, name)
-    else:
-    	clear_dir = os.path.join(output_dir, name, os.path.split(os.path.split(image_dir[0])[0])[-1])
-    for f in os.listdir(clear_dir):
-        os.remove(os.path.join(clear_dir, f))
+	for s_name in other_slide_names.extend(slide_name):
+		if name == 'ImageSets':
+			clear_dir = os.path.join(output_dir, name)
+		else:
+			clear_dir = os.path.join(output_dir, name, slide_name)
+		for f in os.listdir(clear_dir):
+			os.remove(os.path.join(clear_dir, f))
 
 #if train.txt or test.txt exists, remove
 for train_or_test in ['train', 'test']:
@@ -100,8 +105,9 @@ if FROTATE:
     		
 #for each image, subsample image and for each subimage, create associated file with bounding box and class information
 filenum = 1
-for filename in image_dir:
+for filename in os.listdir(image_dir):
     file_, file_extension = os.path.splitext(filename)
+    file_ = os.path.join(image_dir, file_)
     print file_, file_extension
     img = Image.open(filename)
 
@@ -163,7 +169,7 @@ for filename in image_dir:
 		cropped = img.crop((randx, randy, randx+small_size, randy+small_size))
 		
 		#if Annotation file exists, remove
-		filename_annotation = removeIfExists(output_dir, 'Annotations', subname+'.txt')
+		filename_annotation = removeIfExists(output_dir, 'Annotations', slide_name, subname+'.txt')
 		
 		#if FROTATE, flip/rotate according to subimage number 
 		if FROTATE:
@@ -206,6 +212,6 @@ for filename in image_dir:
 	    		if not empty:
 	    			with open(filename_train, 'a') as fp:
 	    				fp.write(subname+'\n')
+	    			#cropped.save(os.path.join(output_dir, 'Images', slide_name, subname+file_extension))
 	    			cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
-	    			print os.path.join(output_dir, 'Images', subname+file_extension)
 
