@@ -223,7 +223,8 @@ for current_dir_ in all_slide_names:
 		    			cropped.save(os.path.join(output_dir, 'Images', s_name, subname+file_extension))
 		    			#cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
 		else:
-			with open(filename_imageset, 'a') as fp:
-				fp.write(name+'\n')
+			print 'imageset', filename_imageset
+			with open(filename_imageset, 'w+') as fp:
+				fp.write(current_dir_+'/'+name+'\n')
 			copyfile(filename, os.path.join(output_dir, 'Images', name+file_extension))
 	
