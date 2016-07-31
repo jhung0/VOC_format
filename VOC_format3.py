@@ -123,7 +123,7 @@ for current_dir_ in all_slide_names:
 	    train_or_test = chooseTrainOrTest(filenum, file_)
 	    
 	    filenum += 1
-	    filename_imageset = os.path.join(output_dir, 'ImageSets',train_or_test+'.txt')
+	    filename_imageset = os.path.join(output_dir, 'ImageSets', train_or_test+'.txt')
 	
 	    width = img.size[0]
 	    height = img.size[1]
@@ -222,9 +222,9 @@ for current_dir_ in all_slide_names:
 		    				fp.write(current_dir_+'/'+subname+'\n')
 		    			cropped.save(os.path.join(output_dir, 'Images', s_name, subname+file_extension))
 		    			#cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
-		else:
-			print 'imageset', filename_imageset
-			with open(filename_imageset, 'w+') as fp:
-				fp.write(current_dir_+'/'+name+'\n')
-			copyfile(filename, os.path.join(output_dir, 'Images', name+file_extension))
+	    else:
+		print 'imageset', filename_imageset
+		with open(filename_imageset, 'w+') as fp:
+			fp.write(current_dir_+'/'+name+'\n')
+		copyfile(filename, os.path.join(output_dir, 'Images', name+file_extension))
 	
