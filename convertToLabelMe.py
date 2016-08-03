@@ -35,6 +35,7 @@ for file_index, file_ in enumerate(test_files):
 
     #make LabelMe xml annotation file
     #image_dir = 'g16_t1_up'
+    image_dir = file_.split('/')[0]
     #LabelMe_file = os.path.join(LabelMe_annotation_dir, image_dir, file_+'.xml')
     LabelMe_file = os.path.join(LabelMe_annotation_dir, file_+'.xml')
     print LabelMe_file
