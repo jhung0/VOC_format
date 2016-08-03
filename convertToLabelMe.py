@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 import os
+from sys import argv
 
 #get test image filenames
 test_files = []
@@ -11,14 +12,14 @@ with open(ImageSet_test) as f:
 
 LabelMe_path = '/var/www/html/LabelMeAnnotationTool'
 LabelMe_annotation_dir = os.path.join(LabelMe_path, 'Annotations')
-DET = 2943
+DET = int(argv[1])#2943
 #create LabelMe xml file from detection coordinates
 classes = ['__background__', 'cell']
 THRESHOLD = 0.5
 path = os.path.join(data_path,'results', 'test')
 for file_index, file_ in enumerate(test_files):
     #get detection coordinates
-    for cls in range(1,len(classes)):
+    for cls in range(1, len(classes)):
         filtered_boxes=[]
 
         detection_file = str(DET) + '_det_test_'+classes[cls]+'.txt'
@@ -33,8 +34,9 @@ for file_index, file_ in enumerate(test_files):
                         filtered_boxes.append([float(i) for i in line_list[2:]])
 
     #make LabelMe xml annotation file
-    image_dir = 'g16_t1_up'
-    LabelMe_file = os.path.join(LabelMe_annotation_dir, image_dir, file_+'.xml')
+    #image_dir = 'g16_t1_up'
+    #LabelMe_file = os.path.join(LabelMe_annotation_dir, image_dir, file_+'.xml')
+    LabelMe_file = os.path.join(LabelMe_annotation_dir, file_+'.xml')
     print LabelMe_file
     #clear existing annotations
     tree = ET.parse(LabelMe_file)
