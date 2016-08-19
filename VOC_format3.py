@@ -58,7 +58,7 @@ def extractObjectData(obj):
 #decide whether the file should be in training or test set
 def chooseTrainOrTest(filenum, filename):
     #if filenum > -1:
-    if 'g16_t1_up' in filename:
+    if any(tt in filename for tt in TRAINING_SET_DIR):
         return 'train'
     return 'test'
 
@@ -74,7 +74,7 @@ def removeIfExists(output_dir, subdir, name):
 
 DIFFICULT = True #whether there's a difficult tag
 FROTATE = False #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
-
+TRAINING_SET_DIR = ['g16_t1_up', 'g7_t1_up', 'g8_t1_up']
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 image_dir = argv[2]
 other_dir = argv[3:]
@@ -152,7 +152,7 @@ for current_dir_ in all_slide_names:
 	        
 	        object_data = [xmin, ymin, xmax, ymax, label, difficult]
 	        data.append(object_data)
-	        if label in ['tro', 'sch', 'gam', 'ring']:
+	        if label in ['tro', 'sch', 'gam', 'ring', 'a']:
 	        	data_infected.extend([1])
 	        else:
 	        	data_infected.extend([0])
