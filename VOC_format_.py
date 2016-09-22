@@ -62,13 +62,50 @@ def chooseTrainOrTest(rr, filename):
 
 #if file exists, remove
 def removeIfExists(output_dir, subdir, name): 
-    filename = os.path.join(output_dir, subdir, name)
-    try:
-        os.remove(filename)
-    except OSError:
-        pass
-    return filename
+	filename = os.path.join(output_dir, subdir, name)
+	try:
+		os.remove(filename)
+	except OSError:
+		pass
+	return filename
 
+def clearExistingFiles(output_dir):
+	'''
+	Remove appropriate files in Annotations, ImageSets, Images
+	'''
+	for name in ['Annotations', 'ImageSets', 'Images']:
+		if name == 'ImageSets':
+			clear_dir = os.path.join(output_dir, name)
+		else:
+			clear_dir = os.path.join(output_dir, name, slide_name)
+		for f in os.listdir(clear_dir):
+			os.remove(os.path.join(clear_dir, f))
+	#if train.txt or test.txt exists, remove
+	for train_or_test in ['train', 'test']:
+		filename_train = removeIfExists(output_dir, 'ImageSets', train_or_test+'.txt')
+
+def getData(filename, filename, file_extension):
+	path_collection = os.path.abspath(filename).split('/Images/')
+	path_annotations = os.path.join(path_collection[0], 'Annotations')
+	xml_name = path_collection[1].split(file_extension)[0]
+	for name in [xml_name, xml_name.upper(), xml_name.lower()]:
+		try_filename_xml = os.path.join(path_annotations, name+'.xml')
+	if os.path.isfile(try_filename_xml):
+		filename_xml = try_filename_xml
+		break
+	else:
+		raise Exception('%s xml file not found'%(xml_name))
+	data = []
+	tree = ET.parse(filename_xml)
+	root = tree.getroot()
+	for obj in root.findall('object'):
+		try:
+			xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
+		except:
+			continue
+		object_data = [xmin, ymin, xmax, ymax, label, difficult]
+		data.append(object_data)
+	return data
 
 DIFFICULT = True #whether there's a difficult tag
 FROTATE = True #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
@@ -85,23 +122,7 @@ print 'size of subimages (px)', small_size
 slide_name = os.path.basename(os.path.dirname(input_dir))
 print 'slide name ', slide_name
 
-#clear existing files
-for name in ['Annotations', 'ImageSets', 'Images']:
-    if name == 'ImageSets':
-	clear_dir = os.path.join(output_dir, name)
-    else:
-	clear_dir = os.path.join(output_dir, name, slide_name)
-    for f in os.listdir(clear_dir):
-	os.remove(os.path.join(clear_dir, f))
-    '''
-    clear_dir = os.path.join(output_dir, name)
-    for f in os.listdir(clear_dir):
-        os.remove(os.path.join(clear_dir, f))
-    '''
-
-#if train.txt or test.txt exists, remove
-for train_or_test in ['train', 'test']:
-    filename_train = removeIfExists(output_dir, 'ImageSets', train_or_test+'.txt')
+clearExistingFiles(output_dir)#clear existing files
 
 #if FROTATE, double the number of subimages
 if FROTATE:
@@ -124,28 +145,8 @@ for filename in os.listdir(input_dir):
     width = img.size[0]
     height = img.size[1]
     
-    #get associated xml file and parse for all objects
-    path_collection = os.path.abspath(filename).split('/Images/')
-    path_annotations = os.path.join(path_collection[0], 'Annotations')
-    xml_name = path_collection[1].split(file_extension)[0]
-    for name in [xml_name, xml_name.upper(), xml_name.lower()]:
-    	try_filename_xml = os.path.join(path_annotations, name+'.xml')
-    	if os.path.isfile(try_filename_xml):
-    		filename_xml = try_filename_xml
-    		break
-    else:
-        raise Exception('%s xml file not found'%(xml_name))
-    print filename_xml    
-    data = []
-    tree = ET.parse(filename_xml)
-    root = tree.getroot()
-    for obj in root.findall('object'):
-    	try:
-    		xmin, ymin, xmax, ymax, label, difficult = extractObjectData(obj)
-        except:
-        	continue
-        object_data = [xmin, ymin, xmax, ymax, label, difficult]
-        data.append(object_data)
+    getData(filename, filename, file_extension)#get associated xml file and parse for all objects
+
     if train_or_test  == 'train':
 	total_num_objects = len(data)
 	if FROTATE:
@@ -154,7 +155,6 @@ for filename in os.listdir(input_dir):
 	num_objects = 0
 	sub = 0
 	while sub < num_subimages or num_objects < 2*total_num_objects:
-        #for sub in range(num_subimages):
         	print sub
 		sub += 1
         	empty = True
