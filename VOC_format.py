@@ -146,7 +146,6 @@ for filename in os.listdir(input_dir):
         	continue
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
         data.append(object_data)
-    print data
     if train_or_test  == 'train':
 	total_num_objects = len(data)
 	if FROTATE:
@@ -183,16 +182,15 @@ for filename in os.listdir(input_dir):
 				cropped = cropped.transpose(Image.FLIP_LEFT_RIGHT)
 
 		#write and save annotation file, only including data that are within the bounds of the subimage
+		#only save annotation file if there's at least 1 object that is not difficult
+		adjusted_diff = [] #list of difficult objects in image
 		for object_data in data:
-			#print object_data
 			adjusted_data = np.array(object_data[0:4]).copy()
 			#adjust according to top left corner
 			adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
 			#print adjusted_data	
 			#inside image
 			if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): 
-				#print 'adjusted', adjusted_data
-				empty = False
 				#if FROTATE, change adjusted_data
 				if FROTATE:
 					for ii in range(8,0,-1):
@@ -202,15 +200,27 @@ for filename in os.listdir(input_dir):
 					if sub%2 == 1:
 						adjusted_data = np.array([small_size - adjusted_data[2], adjusted_data[1], small_size - adjusted_data[0],  adjusted_data[3]])
 				num_objects += 1
-				with open(filename_annotation, 'a') as fp:
-					for datum in adjusted_data:
-						fp.write(str(datum)+' ')
-					print adjusted_data, object_data[4]
-					fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
+				if object_data[-1] == False:
+					empty = False
+					with open(filename_annotation, 'a') as fp:
+						for datum in adjusted_data:
+							fp.write(str(datum)+' ')
+						print adjusted_data, object_data[4]
+						fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
+				else:
+					#save in case difficult ones need to be added
+					adjusted_diff.append([adjusted_data, object_data[-2], object_data[-1]])
+					
 	        #if annotation file not empty
+		#add difficult objects to annotation file
     		#save cropped image name in train.txt file and cropped image
 	    	else:
 	    		if not empty:
+				with open(filename_annotation, 'a') as fp:
+                                        for diff_obj in adjusted_diff:
+						for i in range(len(diff_obj[0])):
+                                                	fp.write(str(diff_obj[0][i])+' ')
+                                        	fp.write(str(diff_obj[-2])+' '+str(diff_obj[-1])+'\n')
 	    			with open(filename_train, 'a') as fp:
 	    				fp.write(slide_name+'/'+subname+'\n')
 	    			cropped.save(os.path.join(output_dir, 'Images', slide_name, subname+file_extension))
