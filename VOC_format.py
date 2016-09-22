@@ -27,6 +27,9 @@ def extractObjectData(obj):
         
     if not DIFFICULT and label[0] == 'd':
         label = 'uncertain'
+    elif label == 'a':
+	label = 'gam'
+        difficult = True
     elif label[0] == 'd':
         difficult = True
         label = label[1:]
@@ -35,22 +38,25 @@ def extractObjectData(obj):
         x = [int(box.find('xmin').text), int(box.find('xmax').text)]
         y = [int(box.find('ymin').text), int(box.find('ymax').text)]
     except:
-        polygon = object.find('polygon')
-        x = [int(pt.find('x').text) for pt in polygon.findall('pt')]
-        y = [int(pt.find('y').text) for pt in polygon.findall('pt')]
-
+        polygon = obj.find('polygon')
+        x = []
+        y = []
+        for pt in polygon.findall('pt'):
+        	for px in pt.findall('x'):
+        		x.extend([int(float(px.text))])
+        	for py in pt.findall('y'):
+        		y.extend([int(float(py.text))])
     xmin = int(min(x))
     ymin = int(min(y))
     xmax = int(max(x))
     ymax = int(max(y))
-	
     if xmin >= xmax or ymin >= ymax:
         raise Exception('object data ', xmin, ymin, xmax, ymax)
     return xmin, ymin, xmax, ymax, label, difficult
 
 #decide whether the file should be in training or test set
-def chooseTrainOrTest(filenum, filename):
-    if filenum < 300:
+def chooseTrainOrTest(rr, filename):
+    if rr < 0.8:
         return 'train'
     return 'test'
 
@@ -69,17 +75,29 @@ FROTATE = True #whether to (in addition to original subimages), flip and rotate 
 UNCERTAIN_CLASS = False #don't have uncertain class, either ignore or tag as difficult
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
-print 'output director', output_dir
+input_dir = argv[2]
+print 'output directory', output_dir
+print 'input directory', input_dir
 num_subimages = 50
 print 'number of subimages (not including rotations)', num_subimages
-small_size = 224
+small_size = 448 
 print 'size of subimages (px)', small_size
+slide_name = os.path.basename(os.path.dirname(input_dir))
+print 'slide name ', slide_name
 
 #clear existing files
 for name in ['Annotations', 'ImageSets', 'Images']:
+    if name == 'ImageSets':
+	clear_dir = os.path.join(output_dir, name)
+    else:
+	clear_dir = os.path.join(output_dir, name, slide_name)
+    for f in os.listdir(clear_dir):
+	os.remove(os.path.join(clear_dir, f))
+    '''
     clear_dir = os.path.join(output_dir, name)
     for f in os.listdir(clear_dir):
         os.remove(os.path.join(clear_dir, f))
+    '''
 
 #if train.txt or test.txt exists, remove
 for train_or_test in ['train', 'test']:
@@ -91,20 +109,21 @@ if FROTATE:
     		
 #for each image, subsample image and for each subimage, create associated file with bounding box and class information
 filenum = 1
-for filename in argv[2:]:
+for filename in os.listdir(input_dir):
+    filename = os.path.join(input_dir, filename)
     file_, file_extension = os.path.splitext(filename)
     print file_, file_extension
     img = Image.open(filename)
 
     #choose whether file is part of training or testing set
-    train_or_test = chooseTrainOrTest(filenum, file_)
+    train_or_test = chooseTrainOrTest(random.random(), file_)
     
     filenum += 1
     filename_train = os.path.join(output_dir, 'ImageSets',train_or_test+'.txt')
 
     width = img.size[0]
     height = img.size[1]
-
+    
     #get associated xml file and parse for all objects
     path_collection = os.path.abspath(filename).split('/Images/')
     path_annotations = os.path.join(path_collection[0], 'Annotations')
@@ -116,7 +135,7 @@ for filename in argv[2:]:
     		break
     else:
         raise Exception('%s xml file not found'%(xml_name))
-        
+    print filename_xml    
     data = []
     tree = ET.parse(filename_xml)
     root = tree.getroot()
@@ -127,10 +146,18 @@ for filename in argv[2:]:
         	continue
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
         data.append(object_data)
-    
+    print data
     if train_or_test  == 'train':
-        for sub in range(num_subimages):
+	total_num_objects = len(data)
+	if FROTATE:
+		total_num_objects = 8*total_num_objects
+        print 'total objects', total_num_objects
+	num_objects = 0
+	sub = 0
+	while sub < num_subimages or num_objects < 2*total_num_objects:
+        #for sub in range(num_subimages):
         	print sub
+		sub += 1
         	empty = True
         	subname = os.path.basename(file_)+'_'+str(sub)
             
@@ -142,7 +169,7 @@ for filename in argv[2:]:
 		cropped = img.crop((randx, randy, randx+small_size, randy+small_size))
 		
 		#if Annotation file exists, remove
-		filename_annotation = removeIfExists(output_dir, 'Annotations', subname+'.txt')
+		filename_annotation = removeIfExists(output_dir, 'Annotations/'+slide_name, subname+'.txt')
 		
 		#if FROTATE, flip/rotate according to subimage number 
 		if FROTATE:
@@ -161,13 +188,10 @@ for filename in argv[2:]:
 			adjusted_data = np.array(object_data[0:4]).copy()
 			#adjust according to top left corner
 			adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])#map(operator.sub, map(int, adjusted_data), [randx, randy, randx, randy])
-		
+			#print adjusted_data	
 			#inside image
 			if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size): 
 				#print 'adjusted', adjusted_data
-				#if object is uncertain, and there is no uncertain class, then don't consider the subimage
-				if not UNCERTAIN_CLASS and object_data[4].lower() == 'uncertain':
-					break
 				empty = False
 				#if FROTATE, change adjusted_data
 				if FROTATE:
@@ -177,7 +201,7 @@ for filename in argv[2:]:
 								adjusted_data = np.array([adjusted_data[1], small_size - adjusted_data[2], adjusted_data[3], small_size - adjusted_data[0]])
 					if sub%2 == 1:
 						adjusted_data = np.array([small_size - adjusted_data[2], adjusted_data[1], small_size - adjusted_data[0],  adjusted_data[3]])
-				
+				num_objects += 1
 				with open(filename_annotation, 'a') as fp:
 					for datum in adjusted_data:
 						fp.write(str(datum)+' ')
@@ -188,8 +212,8 @@ for filename in argv[2:]:
 	    	else:
 	    		if not empty:
 	    			with open(filename_train, 'a') as fp:
-	    				fp.write(subname+'\n')
-	    			cropped.save(os.path.join(output_dir, 'Images', subname+file_extension))
+	    				fp.write(slide_name+'/'+subname+'\n')
+	    			cropped.save(os.path.join(output_dir, 'Images', slide_name, subname+file_extension))
     elif train_or_test == 'test': #full image with all annotations
         empty = True
         #if Annotation file exists, remove
@@ -205,4 +229,4 @@ for filename in argv[2:]:
         if not empty:
             with open(filename_train, 'a') as fp:
                 fp.write(name+'\n')
-            img.save(os.path.join(output_dir, 'Images', name+file_extension))
+            img.save(os.path.join(output_dir, 'Images', slide_name, name+file_extension))
