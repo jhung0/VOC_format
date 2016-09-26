@@ -4,8 +4,8 @@ import os
 Count the number of cells in each class (ground truth)
 '''
 _data_path ='/home/ubuntu/try1/data'
-test_name = 'trainfull'
-classes = ['rbc', 'tro', 'ring', 'sch', 'gam', 'leu']
+test_name = 'test'
+classes = ['rbc', 'tro', 'ring', 'sch', 'gam', 'leu', 'difficult']
 counts = [0]*len(classes)
 
 with open(os.path.join(_data_path, 'ImageSets', test_name + '.txt')) as fp:
@@ -17,8 +17,15 @@ for index in indices:
             data = f.readlines() #each row is an element in a list
 
 	for datum in data:
-		cls = datum.strip().split(' ')[-2]
+		info = datum.strip().split(' ')
+		cls = info[-2]
 		counts[classes.index(cls)] += 1
+		if info[-1] == 'True':
+			counts[-1] += 1
+	'''
 	print index
 	for i in range(len(classes)):
 		print classes[i] +':'+ str(counts[i]) + '.'
+	'''
+for i in range(len(classes)):
+	print classes[i] +':'+ str(counts[i]) + '.'

@@ -12,8 +12,9 @@ from scipy import stats
 '''
 makes trainfull.txt, which contains full images corresponding to train.txt
 Usage: python makeTrainFull.py
-Includes flags for different options. 
+If you want to redo the test set Annotation and Images without running VOC_format again, change test_name to 'test'
 '''
+test_name = 'trainfull'
 #extract data from xml file
 def extractObjectData(obj):
     deleted = int(obj.find('deleted').text)
@@ -68,12 +69,13 @@ def removeIfExists(output_dir, subdir, name):
 DIFFICULT = True #whether there's a difficult tag
 slide_name = 'g8_t1_up'
 input_dir = os.path.join('/home/ubuntu/try1/data/')
-labelme_dir = os.path.join('/var/www/html/LabelMeAnnotationTool/')
+labelme_dir = os.path.join('/home/ubuntu/LabelMeAnnotationTool_backup')#os.path.join('/var/www/html/LabelMeAnnotationTool/')
 print 'input directory', input_dir
 print 'slide name ', slide_name
 
-#go into train.txt, create a set of each image name
-with open(os.path.join(input_dir, 'ImageSets', 'train.txt'), 'r+') as fp:
+if test_name == 'trainfull':
+    #go into train.txt, create a set of each image name
+    with open(os.path.join(input_dir, 'ImageSets', 'train.txt'), 'r+') as fp:
 	lines = fp.readlines()
 	file_set = set()
 	for line in lines:
@@ -81,11 +83,19 @@ with open(os.path.join(input_dir, 'ImageSets', 'train.txt'), 'r+') as fp:
 		#print line
 		file_set.add(line)
 
-#make trainfull.txt
-#copy appropriate images to Images/ and annotations to Annotations/
-with open(os.path.join(input_dir, 'ImageSets', 'trainfull.txt'), 'w+') as fp:
-	for line in file_set:
-		fp.write(line + '\n')
+    #make trainfull.txt
+    #copy appropriate images to Images/ and annotations to Annotations/
+    with open(os.path.join(input_dir, 'ImageSets', test_name + '.txt'), 'w+') as fp:
+        for line in file_set:
+                fp.write(line + '\n')
+
+else:
+    with open(os.path.join(input_dir, 'ImageSets', test_name + '.txt'), 'r+') as fp:
+        lines = fp.readlines()
+        file_set = set()
+        for line in lines:
+                file_set.add(line.strip())
+
 print 'file set', file_set		
 
 #for each file, save image and annotation
@@ -114,9 +124,9 @@ for filename in file_set:
         object_data = [xmin, ymin, xmax, ymax, label, difficult]
         data.append(object_data)
     filename_annotation = os.path.join(input_dir, 'Annotations', filename+'.txt')
-        
-    for object_data in data:
-            with open(filename_annotation, 'a') as fp:
+       
+    with open(filename_annotation, 'w+') as fp: 
+    	for object_data in data:
                 for datum in object_data:
                     fp.write(str(datum)+' ')
                 fp.write('\n')     
