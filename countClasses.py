@@ -5,7 +5,7 @@ Count the number of cells in each class (ground truth)
 '''
 _data_path ='/home/ubuntu/try1/data'
 test_name = 'test'
-classes = ['rbc', 'tro', 'ring', 'sch', 'gam', 'leu', 'difficult']
+classes = ['rbc', 'tro', 'sch', 'ring', 'gam', 'leu', 'difficult']
 counts = [0]*len(classes)
 
 with open(os.path.join(_data_path, 'ImageSets', test_name + '.txt')) as fp:
