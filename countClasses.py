@@ -1,10 +1,11 @@
 import os
-
+from sys import argv
 '''
 Count the number of cells in each class (ground truth)
+python countClasses.py [test name: train, trainfull, test]
 '''
 _data_path ='/home/ubuntu/try1/data'
-test_name = 'test'
+test_name = argv[1]
 classes = ['rbc', 'tro', 'sch', 'ring', 'gam', 'leu', 'difficult']
 counts = [0]*len(classes)
 

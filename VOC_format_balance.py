@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import operator
 import numpy as np
 from scipy import stats
+from shutil import copyfile
 '''
 Randomly takes X subsamples of full image and outputs in other folder
 Usage: python VOC_format.py [Output directory] [Image files]
@@ -15,8 +16,9 @@ Includes flags for different options.
 '''
 BALANCE = True #whether to try to balance infected classes
 DIFFICULT = True #whether there's a difficult tag
-FROTATE = True #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
+ROTATE = True #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
 UNCERTAIN_CLASS = False #don't have uncertain class, either ignore or tag as difficult
+FLIP = False  #whether to flip
 
 #extract data from xml file
 def extractObjectData(obj):
@@ -73,16 +75,46 @@ def removeIfExists(output_dir, subdir, name):
         pass
     return filename
 
+#output objects contained in a crop (coordinates adjusted)
+def getObjectDataFromCrop(data, randx, randy, small_size):
+	data_crop = []
+	for object_data in data:
+		adjusted_data = np.array(object_data[0:4]).copy()
+		adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])
+		if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size):
+			data_crop.append(adjusted_data.tolist()+[object_data[-2], object_data[-1]])
+	return data_crop
+
+#output list of classes sorted by count
+def getMinorLabels(counts, classes):
+	counts_infected_ind = [x[0] for x in sorted(enumerate(counts), key=lambda x:x[1])] #ascending order
+	return [classes[i] for i in counts_infected_ind]
+
+#save annotated coordinates, label, difficult status to file
+def saveAnnotation(filename_annotation, boxCoords, label, difficult):
+	with open(filename_annotation, 'a') as fp:
+		for datum in boxCoords:
+			fp.write(str(datum)+' ')
+		#print boxCoords, label
+                fp.write(str(label)+' '+str(difficult)+'\n')
+
+#save image set
+def saveImageSet(filename_train, name):
+	with open(filename_train, 'a') as fp:
+		fp.write(name+'\n')
+
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 input_dir = argv[2]
 print 'output directory', output_dir
 print 'input directory', input_dir
-num_subimages = 50
+num_subimages = 100
 print 'number of subimages (not including rotations)', num_subimages
 small_size = 448 
 print 'size of subimages (px)', small_size
 slide_name = os.path.basename(os.path.dirname(input_dir))
 print 'slide name ', slide_name
+RBC_LIMIT = int(0.05*num_subimages)
+print 'number of RBC only crops per full image is limited to', RBC_LIMIT
 
 #clear existing files
 for name in ['Annotations', 'ImageSets', 'Images']:
@@ -94,12 +126,14 @@ for name in ['Annotations', 'ImageSets', 'Images']:
 	os.remove(os.path.join(clear_dir, f))
 
 #if train.txt or test.txt exists, remove
-for train_or_test in ['train', 'test']:
-    filename_train = removeIfExists(output_dir, 'ImageSets', train_or_test+'.txt')
+#for train_or_test in ['train', 'test']:
+#    filename_train = removeIfExists(output_dir, 'ImageSets', train_or_test+'.txt')
 
 #if FROTATE, 8* the number of subimages
-if FROTATE:
-    num_subimages = 8*num_subimages
+if ROTATE:
+    num_subimages = 4*num_subimages
+if FLIP:
+    num_subimages = 2*num_subimages
     		
 #for each image, subsample image and for each subimage, create associated file with bounding box and class information
 filenum = 1
@@ -145,126 +179,97 @@ for filename in os.listdir(input_dir):
 	counts[classes.index(label)] += 1
     if train_or_test  == 'train':
 	total_num_objects = len(data)
-	if FROTATE:
-		total_num_objects = 8*total_num_objects
-        print 'total objects', total_num_objects
+	if ROTATE:
+		total_num_objects = 4*total_num_objects
+	if FLIP:
+		total_num_objects = 2*total_num_objects
 	num_objects = 0
 	sub = 0
-	while sub < num_subimages or num_objects < 2*total_num_objects:
+	num_rbc_only = 0
+	while sub < num_subimages and num_objects < 2*total_num_objects:
         	empty = True
-            
 		#randomly choose top left corner of subimage
 		randx = random.randint(0, width-small_size)
 		randy = random.randint(0, height-small_size)
-		print('top left corner coordinates:%s,%s'%(randx, randy))
+		#print('top left corner coordinates:%s,%s'%(randx, randy))
+		
 		#save cropped image
-		cropped = img.crop((randx, randy, randx+small_size, randy+small_size))
+		cropped_ = img.crop((randx, randy, randx+small_size, randy+small_size))
 		
 		#write and save annotation file, only including data that are within the bounds of the subimage
 		#only save annotation file if there's at least 1 object that is not difficult
-		adjusted_diff = [] #list of difficult objects in image
+		#adjusted_diff = [] #list of difficult objects in image
 		
 		#get objects from crop
-		data_crop = getObjectDataFromCrop(data, randx, randy)
-		#if object has label in minor label list
-		if any(object_data[-2] in minor_label and object_data[-1] == False for object_data in data_crop):
+		data_crop = getObjectDataFromCrop(data, randx, randy, small_size)
+		#proceed if there's an object that has label in minor label list or if the image has a non difficult object (checks if it only contains rbcs and checks if the limit has been reached)
+		minor_label_list = getMinorLabels(counts, classes)
+		if any(object_data[-2] in minor_label_list[:-2] and object_data[-1] == False for object_data in data_crop):
+			empty = False
 			#frotate image
-			for ii in range(8):
+			for ii in range(0, 8, 8/((4**ROTATE)*(2**FLIP))):
+				cropped = cropped_.copy()
 				sub += 1
 				subname = os.path.basename(file_) + '_' + str(sub)
 				#if Annotation file exists, remove
 		                filename_annotation = removeIfExists(output_dir, 'Annotations/'+slide_name, subname+'.txt')
 
-				for _ in range(int((ii%8)/2)):
+				if ROTATE:
+				    for _ in range(int(ii/2)%4):
                                         cropped = cropped.rotate(90)
-                                if ii%2 == 1:
+                                if FLIP and int(ii/4)%2 == 1:
                                         cropped = cropped.transpose(Image.FLIP_LEFT_RIGHT)
 				#save crop
 				cropped.save(os.path.join(output_dir, 'Images', slide_name, subname+file_extension))
 				
 				#adjust data	
 				for object_data in data_crop:
-					adjusted_data = np.array(object_data[0:4]).copy() - np.array([randx, randy, randx, randy])
-					for _ in range(int((ii%8)/2)):
+					num_objects += 1
+					adjusted_data = np.array(object_data[0:4]).copy()
+					if ROTATE:
+					    for _ in range(int(ii/2)%4):
+						#print ii, adjusted_data
+						#adjusted_data = np.array([small_size - adjusted_data[3], adjusted_data[0], small_size - adjusted_data[1], adjusted_data[2]])
                                         	adjusted_data = np.array([adjusted_data[1], small_size - adjusted_data[2], adjusted_data[3], small_size - adjusted_data[0]])
-					if ii%2 == 1:
+					if FLIP and int(ii/4)%2 == 1:
 						adjusted_data = np.array([small_size - adjusted_data[2], adjusted_data[1], small_size - adjusted_data[0],  adjusted_data[3]])
-					#save annotation
-					saveAnnotation(file_annotation, boxCoords, label, difficult)
-		else:
+					#count
+					if object_data[-1] == False:
+						counts[classes.index(object_data[-2])] += 1
+					#save annotation and image set
+					saveAnnotation(filename_annotation, adjusted_data, object_data[-2], object_data[-1])
+				saveImageSet(filename_train, slide_name+'/'+subname)
+		elif any(object_data[-1] == False for object_data in data_crop):
 			sub += 1
+			all_rbc = all(object_data[-2] == 'rbc' for object_data in data_crop)
+			if all_rbc and num_rbc_only >= RBC_LIMIT:
+                                continue
+			elif all_rbc:
+				num_rbc_only += 1
+			empty = False
 			subname = os.path.basename(file_) + '_' + str(sub)
 			#if Annotation file exists, remove
 	                filename_annotation = removeIfExists(output_dir, 'Annotations/'+slide_name, subname+'.txt')
 
 			#save crop
-			cropped.save(os.path.join(output_dir, 'Images', slide_name, subname+file_extension))
+			cropped_.save(os.path.join(output_dir, 'Images', slide_name, subname+file_extension))
 
-			#adjust data
+			#save data
 			for object_data in data_crop:
-				adjusted_data = np.array(object_data[0:4]).copy() - np.array([randx, randy, randx, randy])
+				num_objects += 1
 				if object_data[-1] == False:
-					empty = False
-					saveAnnotation(file_annotation, boxCoords, label, difficult)
-				else: 
-					#save in case difficult ones need to be added
-                                        adjusted_diff.append([adjusted_data, object_data[-2], object_data[-1]])
-			
-
-
-
-
-		for object_data in data:
-			adjusted_data = np.array(object_data[0:4]).copy()
-			#adjust according to top left corner
-			adjusted_data = adjusted_data - np.array([randx, randy, randx, randy])
-			#print adjusted_data	
-			#inside image
-			if np.all(adjusted_data >= 0) and np.all(adjusted_data < small_size):
-				    #frotate
-				    for ii in range(8):
-					for _ in range(int((ii%8)/2)):
-						adjusted_data = np.array([adjusted_data[1], small_size - adjusted_data[2], adjusted_data[3], small_size - adjusted_data[0]])
-					if ii%2 == 1:
-						adjusted_data = np.array([small_size - adjusted_data[2], adjusted_data[1], small_size - adjusted_data[0],  adjusted_data[3]])
-				        #save
-					if object_data[-1] == False:
-					    empty = False
-					    with open(filename_annotation, 'a') as fp:
-						for datum in adjusted_data:
-							fp.write(str(datum)+' ')
-						print adjusted_data, object_data[4]
-						fp.write(str(object_data[-2])+' '+str(object_data[-1])+'\n')
-					else:
-					    #save in case difficult ones need to be added
-					    adjusted_diff.append([adjusted_data, object_data[-2], object_data[-1]])
-					
-	        #if annotation file not empty
-		#add difficult objects to annotation file
-    		#save cropped image name in train.txt file and cropped image
-	    	else:
-	    		if not empty:
-				with open(filename_annotation, 'a') as fp:
-                                        for diff_obj in adjusted_diff:
-						for i in range(len(diff_obj[0])):
-                                                	fp.write(str(diff_obj[0][i])+' ')
-                                        	fp.write(str(diff_obj[-2])+' '+str(diff_obj[-1])+'\n')
-	    			with open(filename_train, 'a') as fp:
-	    				fp.write(slide_name+'/'+subname+'\n')
-	    			cropped.save(os.path.join(output_dir, 'Images', slide_name, subname+file_extension))
+					counts[classes.index(object_data[-2])] += 1
+				saveAnnotation(filename_annotation, object_data[0:4], object_data[-2], object_data[-1])
+			saveImageSet(filename_train, slide_name+'/'+subname)
     elif train_or_test == 'test': #full image with all annotations
         empty = True
         #if Annotation file exists, remove
         name = os.path.basename(file_)
-        filename_annotation = removeIfExists(output_dir, 'Annotations', name+'.txt')
+        filename_annotation = removeIfExists(output_dir, 'Annotations', slide_name, name+'.txt')
         
         for object_data in data:
             empty = False
-            with open(filename_annotation, 'a') as fp:
-                for datum in object_data:
-                    fp.write(str(datum)+' ')
-                fp.write('\n')     
+	    saveAnnotation(filename_annotation, object_data[0:4], object_data[-2], object_data[-1])
         if not empty:
-            with open(filename_train, 'a') as fp:
-                fp.write(name+'\n')
-            img.save(os.path.join(output_dir, 'Images', slide_name, name+file_extension))
+	    saveImageSet(filename_train, name)
+            copyfile(filename, os.path.join(output_dir, 'Images', slide_name, name+file_extension))

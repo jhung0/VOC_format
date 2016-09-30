@@ -8,7 +8,7 @@ python convertToLabelMe.py [PID number]
 '''
 #get test image filenames
 test_files = []
-test_name = 'trainfull'
+test_name = argv[2]
 data_path = '/home/ubuntu/try1'
 ImageSet_test = os.path.join(data_path, 'data', 'ImageSets', test_name  + '.txt') #path of test set file
 with open(ImageSet_test) as f:

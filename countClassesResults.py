@@ -14,7 +14,7 @@ test_name = argv[2]
 
 image_path = '/home/ubuntu/try1/data/Images/'
 classes = ['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
-THRESHOLD = 0.5
+THRESHOLD = 0.65
 path = '/home/ubuntu/try1/results/'+test_name
 
 #for each class get the number of bounding boxes with probability >= THRESHOLD
