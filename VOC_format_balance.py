@@ -19,11 +19,12 @@ DIFFICULT = True #whether there's a difficult tag
 ROTATE = True #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
 UNCERTAIN_CLASS = False #don't have uncertain class, either ignore or tag as difficult
 FLIP = False  #whether to flip
-
+TRAINING_SET_DIR = ['g16_t1_up', 'g16_t2_up', 'g12', 'g11_t1', 'g7_t1_up']
+CLASSES = ['rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
 #extract data from xml file
 def extractObjectData(obj):
     deleted = int(obj.find('deleted').text)
-    label = obj.find('name').text
+    label = obj.find('name').text.strip()
     difficult = False
     #if label is empty, skip
     #if IGNORE_EDGE_CELLS is true and label begins with e, skip object (CONTINUE NOT BREAK)
@@ -39,6 +40,10 @@ def extractObjectData(obj):
     elif label[0] == 'd':
         difficult = True
         label = label[1:]
+    #if label is not in the CLASSES list, then skip
+    if label not in CLASSES:
+	print label
+	raise Exception
     try:
         box = obj.find('segm').find('box')
         x = [int(box.find('xmin').text), int(box.find('xmax').text)]
@@ -61,14 +66,19 @@ def extractObjectData(obj):
     return xmin, ymin, xmax, ymax, label, difficult
 
 #decide whether the file should be in training or test set
-def chooseTrainOrTest(rr, filename):
-    if rr < 0.8:
-        return 'train'
-    return 'test'
+def chooseTrainOrTest(rr, filename, all_slide_names):
+    if len(all_slide_names) == 1:
+    	if rr < 0.8:
+        	return 'train'
+    	return 'test'
+    else:
+	if any(tt in filename for tt in TRAINING_SET_DIR):
+        	return 'train'
+    	return 'test'
 
 #if file exists, remove
-def removeIfExists(output_dir, subdir, name): 
-    filename = os.path.join(output_dir, subdir, name)
+def removeIfExists(output_dir, name): 
+    filename = os.path.join(output_dir, name)
     try:
         os.remove(filename)
     except OSError:
@@ -86,8 +96,13 @@ def getObjectDataFromCrop(data, randx, randy, small_size):
 	return data_crop
 
 #output list of classes sorted by count
+#if the top 2 classes are more than 4 times the number of the lesser classes, then the top 2 are not minor, otherwise only the top 1 is not minor
 def getMinorLabels(counts, classes):
 	counts_infected_ind = [x[0] for x in sorted(enumerate(counts), key=lambda x:x[1])] #ascending order
+	if counts[counts_infected_ind[-3]] > 0 and counts[counts_infected_ind[-2]]*1.0/counts[counts_infected_ind[-3]]:	
+		counts_infected_ind = counts_infected_ind[:-2]
+	else:
+		counts_infected_ind = counts_infected_ind[:-1]	
 	return [classes[i] for i in counts_infected_ind]
 
 #save annotated coordinates, label, difficult status to file
@@ -105,25 +120,31 @@ def saveImageSet(filename_train, name):
 
 output_dir = argv[1]#os.path.join('/Users', 'jyhung', 'Documents', 'VOC_format', 'data')
 input_dir = argv[2]
+other_dir = argv[3:]
 print 'output directory', output_dir
 print 'input directory', input_dir
+print 'training set directories', TRAINING_SET_DIR
 num_subimages = 100
 print 'number of subimages (not including rotations)', num_subimages
 small_size = 448 
 print 'size of subimages (px)', small_size
-slide_name = os.path.basename(os.path.dirname(input_dir))
-print 'slide name ', slide_name
+slide_name = os.path.split(input_dir)[1] #os.path.basename(os.path.dirname(input_dir))
+other_slide_names = [os.path.split(other_dir[i])[1] for i in range(len(other_dir))]
+all_slide_names = other_slide_names + [slide_name]
+random.shuffle(all_slide_names)
+print 'slide name', slide_name, other_slide_names, all_slide_names
 RBC_LIMIT = int(0.05*num_subimages)
 print 'number of RBC only crops per full image is limited to', RBC_LIMIT
 
 #clear existing files
 for name in ['Annotations', 'ImageSets', 'Images']:
-    if name == 'ImageSets':
-	clear_dir = os.path.join(output_dir, name)
-    else:
-	clear_dir = os.path.join(output_dir, name, slide_name)
-    for f in os.listdir(clear_dir):
-	os.remove(os.path.join(clear_dir, f))
+	for s_name in all_slide_names:
+    		if name == 'ImageSets':
+			clear_dir = os.path.join(output_dir, name)
+    		else:
+			clear_dir = os.path.join(output_dir, name, s_name)
+    		for f in os.listdir(clear_dir):
+			os.remove(os.path.join(clear_dir, f))
 
 #if train.txt or test.txt exists, remove
 #for train_or_test in ['train', 'test']:
@@ -139,14 +160,19 @@ if FLIP:
 filenum = 1
 classes = ['rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
 counts = [0]*len(classes)
-for filename in os.listdir(input_dir):
-    filename = os.path.join(input_dir, filename)
+for current_dir_ in all_slide_names:
+  current_dir = os.path.join(os.path.split(input_dir)[0], current_dir_)
+  shuffled_current_dir = os.listdir(current_dir)
+  random.shuffle(shuffled_current_dir)
+  for filename in shuffled_current_dir:
+    filename = os.path.join(current_dir, filename)
     file_, file_extension = os.path.splitext(filename)
-    print file_, file_extension
+    s_name = os.path.split(current_dir)[1]
+    print file_, file_extension, s_name
     img = Image.open(filename)
 
     #choose whether file is part of training or testing set
-    train_or_test = chooseTrainOrTest(random.random(), file_)
+    train_or_test = chooseTrainOrTest(random.random(), file_, all_slide_names)
     
     filenum += 1
     filename_train = os.path.join(output_dir, 'ImageSets',train_or_test+'.txt')
@@ -204,7 +230,7 @@ for filename in os.listdir(input_dir):
 		data_crop = getObjectDataFromCrop(data, randx, randy, small_size)
 		#proceed if there's an object that has label in minor label list or if the image has a non difficult object (checks if it only contains rbcs and checks if the limit has been reached)
 		minor_label_list = getMinorLabels(counts, classes)
-		if any(object_data[-2] in minor_label_list[:-2] and object_data[-1] == False for object_data in data_crop):
+		if any(object_data[-2] in minor_label_list and object_data[-1] == False for object_data in data_crop):
 			empty = False
 			#frotate image
 			for ii in range(0, 8, 8/((4**ROTATE)*(2**FLIP))):
@@ -212,7 +238,7 @@ for filename in os.listdir(input_dir):
 				sub += 1
 				subname = os.path.basename(file_) + '_' + str(sub)
 				#if Annotation file exists, remove
-		                filename_annotation = removeIfExists(output_dir, 'Annotations/'+slide_name, subname+'.txt')
+		                filename_annotation = removeIfExists(output_dir, os.path.join('Annotations',s_name, subname+'.txt'))
 
 				if ROTATE:
 				    for _ in range(int(ii/2)%4):
@@ -220,9 +246,9 @@ for filename in os.listdir(input_dir):
                                 if FLIP and int(ii/4)%2 == 1:
                                         cropped = cropped.transpose(Image.FLIP_LEFT_RIGHT)
 				#save crop
-				cropped.save(os.path.join(output_dir, 'Images', slide_name, subname+file_extension))
+				cropped.save(os.path.join(output_dir, 'Images', s_name, subname+file_extension))
 				
-				#adjust data	
+				#adjust data
 				for object_data in data_crop:
 					num_objects += 1
 					adjusted_data = np.array(object_data[0:4]).copy()
@@ -238,8 +264,8 @@ for filename in os.listdir(input_dir):
 						counts[classes.index(object_data[-2])] += 1
 					#save annotation and image set
 					saveAnnotation(filename_annotation, adjusted_data, object_data[-2], object_data[-1])
-				saveImageSet(filename_train, slide_name+'/'+subname)
-		elif any(object_data[-1] == False for object_data in data_crop):
+				saveImageSet(filename_train, s_name+'/'+subname)
+		elif len(data_crop) > 0 and all(object_data[-1] == False for object_data in data_crop):
 			sub += 1
 			all_rbc = all(object_data[-2] == 'rbc' for object_data in data_crop)
 			if all_rbc and num_rbc_only >= RBC_LIMIT:
@@ -249,10 +275,10 @@ for filename in os.listdir(input_dir):
 			empty = False
 			subname = os.path.basename(file_) + '_' + str(sub)
 			#if Annotation file exists, remove
-	                filename_annotation = removeIfExists(output_dir, 'Annotations/'+slide_name, subname+'.txt')
+	                filename_annotation = removeIfExists(output_dir, os.path.join('Annotations',s_name, subname+'.txt'))
 
 			#save crop
-			cropped_.save(os.path.join(output_dir, 'Images', slide_name, subname+file_extension))
+			cropped_.save(os.path.join(output_dir, 'Images', s_name, subname+file_extension))
 
 			#save data
 			for object_data in data_crop:
@@ -260,16 +286,16 @@ for filename in os.listdir(input_dir):
 				if object_data[-1] == False:
 					counts[classes.index(object_data[-2])] += 1
 				saveAnnotation(filename_annotation, object_data[0:4], object_data[-2], object_data[-1])
-			saveImageSet(filename_train, slide_name+'/'+subname)
+			saveImageSet(filename_train, s_name+'/'+subname)
     elif train_or_test == 'test': #full image with all annotations
         empty = True
         #if Annotation file exists, remove
         name = os.path.basename(file_)
-        filename_annotation = removeIfExists(output_dir, 'Annotations', slide_name, name+'.txt')
+        filename_annotation = removeIfExists(output_dir, os.path.join('Annotations', s_name, name+'.txt'))
         
         for object_data in data:
             empty = False
 	    saveAnnotation(filename_annotation, object_data[0:4], object_data[-2], object_data[-1])
         if not empty:
-	    saveImageSet(filename_train, name)
-            copyfile(filename, os.path.join(output_dir, 'Images', slide_name, name+file_extension))
+	    saveImageSet(filename_train, s_name+'/'+name)
+            copyfile(filename, os.path.join(output_dir, 'Images', s_name, name+file_extension))

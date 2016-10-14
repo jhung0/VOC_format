@@ -20,7 +20,12 @@ for index in indices:
 	for datum in data:
 		info = datum.strip().split(' ')
 		cls = info[-2]
-		counts[classes.index(cls)] += 1
+		try:
+			counts[classes.index(cls)] += 1
+		except:
+			print filename, cls+" not in classes set"
+			continue
+			#raise Exception
 		if info[-1] == 'True':
 			counts[-1] += 1
 	'''
@@ -29,4 +34,6 @@ for index in indices:
 		print classes[i] +':'+ str(counts[i]) + '.'
 	'''
 for i in range(len(classes)):
+	if classes[i] == 'gam':
+		print 'gam count includes difficult'
 	print classes[i] +':'+ str(counts[i]) + '.'

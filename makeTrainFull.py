@@ -69,7 +69,7 @@ def removeIfExists(output_dir, subdir, name):
 DIFFICULT = True #whether there's a difficult tag
 slide_name = 'g8_t1_up'
 input_dir = os.path.join('/home/ubuntu/try1/data/')
-labelme_dir = os.path.join('/home/ubuntu/LabelMeAnnotationTool_backup')#os.path.join('/var/www/html/LabelMeAnnotationTool/')
+labelme_dir = os.path.join('/var/www/html/LabelMeAnnotationTool/')#os.path.join('/home/ubuntu/LabelMeAnnotationTool_backup')#
 print 'input directory', input_dir
 print 'slide name ', slide_name
 

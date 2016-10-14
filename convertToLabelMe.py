@@ -4,7 +4,7 @@ from sys import argv
 
 '''
 converts detections after testing to LabelMe format so that results can be viewed on LabelMe
-python convertToLabelMe.py [PID number]
+python convertToLabelMe.py [PID number ] [test name]
 '''
 #get test image filenames
 test_files = []
