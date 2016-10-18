@@ -41,6 +41,7 @@ def getDetections(cls, filename, threshold, test_name = 'trainfull', path='/home
                 #if the detection has probability above the threshold
                 if float(line_list[1]) >= threshold:
                         det_index = line_list[0]
+			#if the detection's index matches any index already in filtered detections, add to that dictionary; else, make a new dictionary 
                         if any(d['index'] == det_index for d in filtered_detections):
                                 fi = map(itemgetter('index'), filtered_detections).index(det_index)
                                 filtered_detections[fi]['boxes'].append([float(i) for i in line_list[2:]])
@@ -131,7 +132,6 @@ for test_name in ['trainfull', 'test']:
 	#get detections
 	filename = str(DET)+'_det_'+test_name+'_'+cls+'.txt'
 	filtered_detections.extend(getDetections(cls, filename, THRESHOLD, test_name))
-    #print filtered_detections
     gt = getGroundTruth(data_path, classes, test_name)
     for gt_i in gt:
 	index = gt_i['index']
