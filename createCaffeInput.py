@@ -7,13 +7,15 @@ from sklearn.metrics import confusion_matrix
 import numpy as np
 import subprocess
 '''
-create image and text files to be used for training with caffe
+Create image and text files to be used for training with caffe
+Has option to not include detections classified as rbc
 '''
 
 net = argv[1] #net
 prototxt = argv[2] #prototxt
 DET = argv[3] #PID trainfull
 DET_test = argv[4] #PID test
+REMOVE_RBC = True
 classes = ['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
 THRESHOLD = 1.0/(len(classes)-1)
 print 'detection threshold ', THRESHOLD
