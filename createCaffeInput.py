@@ -16,8 +16,10 @@ prototxt = argv[2] #prototxt
 DET = argv[3] #PID trainfull
 DET_test = argv[4] #PID test
 REMOVE_RBC = True
-classes = ['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
-THRESHOLD = 1.0/(len(classes)-1)
+classes_train = ['__background__', 'rbc', 'other']
+classes_test = ['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
+
+THRESHOLD = 1.0/(len(classes_train))
 print 'detection threshold ', THRESHOLD
 MIN_OVERLAP = 0.5
 data_path = '/home/ubuntu/try1/data/'
@@ -26,7 +28,7 @@ cfg_file = "/home/ubuntu/py-faster-rcnn/experiments/cfgs/faster_rcnn_end2end.yml
 TRAIN_DATA_ROOT= '/home/ubuntu/caffe/examples/try1/train'
 VAL_DATA_ROOT='/home/ubuntu/caffe/examples/try1/test'
 DATA = '/home/ubuntu/caffe/data/try1'
-
+INCLUDE_RBCs = False
 def getPID(net, prototxt, cfg_file):
     proc = subprocess.Popen(['python', '/home/ubuntu/py-faster-rcnn/tools/test_net.py', '--gpu', '0', '--def', prototxt, '--net',  net, '--imdb', 'try1_trainfull', '--cfg', cfg_file], stdout=subprocess.PIPE)
     for line in proc.stdout:
@@ -83,8 +85,8 @@ def load_try1_annotation(classes, data_path, index):
         filename = os.path.join(data_path, 'Annotations', index + '.txt')
         with open(filename) as f:
             data = f.readlines() #each row is an element in a list
-            non_diff_objs = [data[ix] for ix in range(len(data)) if data[ix].strip().split(' ')[-1] != 'True']
-            data = non_diff_objs
+            #non_diff_objs = [data[ix] for ix in range(len(data)) if data[ix].strip().split(' ')[-1] != 'True']
+            #data = non_diff_objs
         num_objs = len(data)
         if num_objs == 0:
                 return None
@@ -130,24 +132,32 @@ for test_name in ['trainfull', 'test']:
 	DET = DET_test
         TRAIN_DATA_ROOT = VAL_DATA_ROOT
     filtered_detections = []
-    for cls in classes[1:]:
+    if INCLUDE_RBCs:
+	start_class_idx = 1
+    else:
+	start_class_idx = 2
+    for cls in classes_train[start_class_idx:]:
 	#get detections
 	filename = str(DET)+'_det_'+test_name+'_'+cls+'.txt'
 	filtered_detections.extend(getDetections(cls, filename, THRESHOLD, test_name))
-    gt = getGroundTruth(data_path, classes, test_name)
+    gt = getGroundTruth(data_path, classes_test, test_name)
     for gt_i in gt:
 	index = gt_i['index']
 	extension='.jpg' 
         pil_im =Image.open(os.path.join(image_path, index+extension))
 	pil_im = pil_im.copy()
-        filtered_detections_image = filtered_detections[map(itemgetter('index'), filtered_detections).index(index)]#filter detections for those in the same image as the gt
-        #index = index.split('/')
+	try:
+        	filtered_detections_image = filtered_detections[map(itemgetter('index'), filtered_detections).index(index)]#filter detections for those in the same image as the gt
+        except:
+		print index, ' has no non RBC detections'
+		continue
+	#index = index.split('/')
 	#index = index[0]+'-'+index[1]
         print index
 	#for each detection (of any class), find if there's a matching ground truth which has not yet been matched
         for ii, _boxes in enumerate(filtered_detections_image['boxes']):
                 ov_max = -float("inf")
-                detection_class = filtered_detections_image['classes'][ii]
+                #detection_class = filtered_detections_image['classes'][ii]
 		cropped = pil_im.crop((int(_boxes[0]), int(_boxes[1]), int(_boxes[2]), int(_boxes[3])))
                 for ngt, gt_boxes in enumerate(gt_i['boxes']):
                         iw = min(_boxes[2], gt_boxes[2]) - max(_boxes[0], gt_boxes[0]) + 1
@@ -160,17 +170,19 @@ for test_name in ['trainfull', 'test']:
                                         ov_max = ov
                                         ngt_max = ngt
                 if ov_max >= MIN_OVERLAP:
+			gt_i['det'][ngt_max] = 1	
+			cropped_name = os.path.join(index+'_'+str(ngt_max)+'_'+str(ii)+extension)
                         if not gt_i['difficult'][ngt_max]:
-				cropped_name = os.path.join(index+'_'+str(ngt_max)+'_'+str(ii)+extension)
-                                cropped.save(os.path.join(TRAIN_DATA_ROOT, cropped_name))
 				saveTxt(test_name, cropped_name, int(gt_i['gt_classes'][ngt_max]))
-                                gt_i['det'][ngt_max] = 1
+			elif test_name == 'test':
+				saveTxt('test_diff', cropped_name, 7)
                 else:
 			cropped_name = os.path.join(index+'_'+'None'+'_'+str(ii)+extension)
-			cropped.save(os.path.join(TRAIN_DATA_ROOT, cropped_name))
                         saveTxt(test_name, cropped_name, 0)
+                cropped.save(os.path.join(TRAIN_DATA_ROOT, cropped_name))
         #add each ground truth to the training set
-	for jj, gt_boxes in enumerate(gt_i['boxes']):
+	if test_name == 'trainfull':
+	    for jj, gt_boxes in enumerate(gt_i['boxes']):
 		img_filename = os.path.join(index+'_'+str(jj)+extension)
 		try:
 			cropped = pil_im.crop((int(gt_boxes[0]), int(gt_boxes[1]), int(gt_boxes[2]), int(gt_boxes[3])))

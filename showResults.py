@@ -11,12 +11,14 @@ DET = argv[1]
 test_name = argv[2]
 iterations = argv[3]
 learning_rate = argv[4]
-THRESHOLD = 0.65
 print 'detection threshold ', THRESHOLD 
 MIN_OVERLAP = 0.5
-classes = ['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
+#classes = ['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
+classes = ['__background__', 'rbc', 'other']
+threshold = 1.0/len(classes)#0.65
+
 base_dir = os.path.join('/home/ubuntu/py-faster-rcnn/output/faster_rcnn_end2end/', test_name)
-base_dir = os.path.join(base_dir, 'vgg_cnn_m_1024_faster_rcnn_iter_'+iterations+'_lr'+learning_rate)
+base_dir = os.path.join(base_dir, 'vgg_cnn_m_1024_faster_rcnn_lr' + str(learning_rate) + '_iter_'+iterations)#os.path.join(base_dir, 'vgg_cnn_m_1024_faster_rcnn_iter_'+iterations+'_lr'+learning_rate)
 data_path = '/home/ubuntu/try1/data/'
 path = '/home/ubuntu/try1/results/'
 gt = []
