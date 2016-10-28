@@ -29,12 +29,6 @@ TRAIN_DATA_ROOT= '/home/ubuntu/caffe/examples/try1/train'
 VAL_DATA_ROOT='/home/ubuntu/caffe/examples/try1/test'
 DATA = '/home/ubuntu/caffe/data/try1'
 INCLUDE_RBCs = False
-def getPID(net, prototxt, cfg_file):
-    proc = subprocess.Popen(['python', '/home/ubuntu/py-faster-rcnn/tools/test_net.py', '--gpu', '0', '--def', prototxt, '--net',  net, '--imdb', 'try1_trainfull', '--cfg', cfg_file], stdout=subprocess.PIPE)
-    for line in proc.stdout:
-    	if 'Results PID:' in line:
-        	print line, line.split(":")[-1].strip()
-		return line.split(":")[-1].strip()
 
 def getDetections(cls, filename, threshold, test_name = 'trainfull', path='/home/ubuntu/try1/results'):
     filtered_detections = []
@@ -124,13 +118,13 @@ for name in [TRAIN_DATA_ROOT, DATA, VAL_DATA_ROOT]:
 			for fp in os.listdir(os.path.join(clear_dir, f)):
 				os.remove(os.path.join(clear_dir, f, fp))
 
-if not DET:
-	DET = getPID(net, prototxt, cfg_file)
 for test_name in ['trainfull', 'test']:
     print test_name
     if test_name == 'test':
 	DET = DET_test
         TRAIN_DATA_ROOT = VAL_DATA_ROOT
+    counts = [0]*(1+len(classes_test))
+
     filtered_detections = []
     if INCLUDE_RBCs:
 	start_class_idx = 1
@@ -169,19 +163,43 @@ for test_name in ['trainfull', 'test']:
                                 if ov > ov_max:
                                         ov_max = ov
                                         ngt_max = ngt
-                if ov_max >= MIN_OVERLAP:
-			gt_i['det'][ngt_max] = 1	
-			cropped_name = os.path.join(index+'_'+str(ngt_max)+'_'+str(ii)+extension)
-                        if not gt_i['difficult'][ngt_max]:
-				saveTxt(test_name, cropped_name, int(gt_i['gt_classes'][ngt_max]))
-			elif test_name == 'test':
-				saveTxt('test_diff', cropped_name, 7)
-                else:
-			cropped_name = os.path.join(index+'_'+'None'+'_'+str(ii)+extension)
-                        saveTxt(test_name, cropped_name, 0)
-                cropped.save(os.path.join(TRAIN_DATA_ROOT, cropped_name))
+		#balance classes
+		try:
+			current_class = int(gt_i['gt_classes'][ngt_max])
+		except:
+			current_class = 0
+		if max(counts) == counts[current_class]:
+			aug = 1
+		elif max(counts)*1.0/4 > counts[current_class]:
+			aug = 8
+		elif max(counts)*1.0/2 > counts[current_class]:
+			aug = 4
+		else: 
+			aug = 2
+		if test_name == 'test':
+			aug = 1
+		for jj in range(0, aug):
+			cropped_ = cropped.copy()
+                	if ov_max >= MIN_OVERLAP:
+				gt_i['det'][ngt_max] = 1	
+				cropped_name = os.path.join(index+'_'+str(ngt_max)+'_'+str(ii)+'_'+str(jj)+extension)
+                        	if not gt_i['difficult'][ngt_max]:
+					saveTxt(test_name, cropped_name, int(gt_i['gt_classes'][ngt_max]))
+					counts[int(gt_i['gt_classes'][ngt_max])] += 1
+				elif test_name == 'test':
+					saveTxt('test_diff', cropped_name, 7)
+					counts[7] += 1
+                	else:
+				cropped_name = os.path.join(index+'_'+'None'+'_'+str(ii)+'_'+str(jj)+extension)
+                        	saveTxt(test_name, cropped_name, 0)
+				counts[0] += 1
+			for _ in range(int(jj/2)%4):
+                        	cropped_ = cropped_.rotate(90)
+			if jj%2 == 1:
+                                cropped_ = cropped_.transpose(Image.FLIP_LEFT_RIGHT)
+                	cropped_.save(os.path.join(TRAIN_DATA_ROOT, cropped_name))
         #add each ground truth to the training set
-	if test_name == 'trainfull':
+	if test_name == '': #'trainfull':
 	    for jj, gt_boxes in enumerate(gt_i['boxes']):
 		img_filename = os.path.join(index+'_'+str(jj)+extension)
 		try:
@@ -192,4 +210,4 @@ for test_name in ['trainfull', 'test']:
 			#print index, gt_boxes
 			#raise Exception
 			continue
-
+    print 'counts', counts
