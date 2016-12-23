@@ -133,7 +133,7 @@ other_slide_names = [os.path.split(other_dir[i])[1] for i in range(len(other_dir
 all_slide_names = other_slide_names + [slide_name]
 random.shuffle(all_slide_names)
 print 'slide name', slide_name, other_slide_names, all_slide_names
-RBC_LIMIT = int(0.05*num_subimages)
+RBC_LIMIT = int(0.04*num_subimages)
 print 'number of RBC only crops per full image is limited to', RBC_LIMIT
 
 #clear existing files
@@ -230,8 +230,10 @@ for current_dir_ in all_slide_names:
 		data_crop = getObjectDataFromCrop(data, randx, randy, small_size)
 		#proceed if there's an object that has label in minor label list or if the image has a non difficult object (checks if it only contains rbcs and checks if the limit has been reached)
 		minor_label_list = getMinorLabels(counts, classes)
+		#print minor_label_list
 		if any(object_data[-2] in minor_label_list and object_data[-1] == False for object_data in data_crop):
 			empty = False
+			#print data_crop
 			#frotate image
 			for ii in range(0, 8, 8/((4**ROTATE)*(2**FLIP))):
 				cropped = cropped_.copy()
@@ -265,6 +267,29 @@ for current_dir_ in all_slide_names:
 					#save annotation and image set
 					saveAnnotation(filename_annotation, adjusted_data, object_data[-2], object_data[-1])
 				saveImageSet(filename_train, s_name+'/'+subname)
+		#randomly rotate
+		elif len(data_crop) > 0 and any(object_data[-2] not in ['rbc']+minor_label_list  and object_data[-1] == False for object_data in data_crop):
+			sub += 1
+			cropped = cropped_.copy()
+			rand_rotate = random.randint(0,3)
+			for _ in range(rand_rotate):
+				cropped = cropped.rotate(90)
+			
+			subname = os.path.basename(file_) + '_' + str(sub)
+                        #if Annotation file exists, remove
+                        filename_annotation = removeIfExists(output_dir, os.path.join('Annotations',s_name, subname+'.txt'))
+			
+			cropped.save(os.path.join(output_dir, 'Images', s_name, subname+file_extension))
+			#save data
+                        for object_data in data_crop:
+                                num_objects += 1
+				adjusted_data = np.array(object_data[0:4]).copy()
+                                if object_data[-1] == False:
+                                        counts[classes.index(object_data[-2])] += 1
+				for _ in range(rand_rotate):
+					adjusted_data = np.array([adjusted_data[1], small_size - adjusted_data[2], adjusted_data[3], small_size - adjusted_data[0]])
+                                saveAnnotation(filename_annotation, adjusted_data, object_data[-2], object_data[-1])
+                        saveImageSet(filename_train, s_name+'/'+subname)	
 		elif len(data_crop) > 0 and all(object_data[-1] == False for object_data in data_crop):
 			sub += 1
 			all_rbc = all(object_data[-2] == 'rbc' for object_data in data_crop)
@@ -286,7 +311,7 @@ for current_dir_ in all_slide_names:
 				if object_data[-1] == False:
 					counts[classes.index(object_data[-2])] += 1
 				saveAnnotation(filename_annotation, object_data[0:4], object_data[-2], object_data[-1])
-			saveImageSet(filename_train, s_name+'/'+subname)
+			saveImageSet(filename_train, s_name+'/'+subname)	
     elif train_or_test == 'test': #full image with all annotations
         empty = True
         #if Annotation file exists, remove
@@ -299,3 +324,5 @@ for current_dir_ in all_slide_names:
         if not empty:
 	    saveImageSet(filename_train, s_name+'/'+name)
             copyfile(filename, os.path.join(output_dir, 'Images', s_name, name+file_extension))
+
+#print counts

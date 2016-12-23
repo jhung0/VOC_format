@@ -15,6 +15,7 @@ net = argv[1] #net
 prototxt = argv[2] #prototxt
 DET = argv[3] #PID trainfull
 DET_test = argv[4] #PID test
+cfg_file = argv[5] #cfg file, e.g. /home/ubuntu/py-faster-rcnn/experiments/cfgs/faster_rcnn_end2end.yml
 REMOVE_RBC = True
 classes_train = ['__background__', 'rbc', 'other']
 classes_test = ['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
@@ -24,11 +25,10 @@ print 'detection threshold ', THRESHOLD
 MIN_OVERLAP = 0.5
 data_path = '/home/ubuntu/try1/data/'
 image_path = os.path.join(data_path, 'Images')
-cfg_file = "/home/ubuntu/py-faster-rcnn/experiments/cfgs/faster_rcnn_end2end.yml"
 TRAIN_DATA_ROOT= '/home/ubuntu/caffe/examples/try1/train'
 VAL_DATA_ROOT='/home/ubuntu/caffe/examples/try1/test'
 DATA = '/home/ubuntu/caffe/data/try1'
-INCLUDE_RBCs = False
+INCLUDE_RBCs = False #whether to include detected RBCs
 
 def getDetections(cls, filename, threshold, test_name = 'trainfull', path='/home/ubuntu/try1/results'):
     filtered_detections = []
@@ -168,6 +168,7 @@ for test_name in ['trainfull', 'test']:
 			current_class = int(gt_i['gt_classes'][ngt_max])
 		except:
 			current_class = 0
+		'''
 		if max(counts) == counts[current_class]:
 			aug = 1
 		elif max(counts)*1.0/4 > counts[current_class]:
@@ -176,6 +177,8 @@ for test_name in ['trainfull', 'test']:
 			aug = 4
 		else: 
 			aug = 2
+		'''
+		aug = 8
 		if test_name == 'test':
 			aug = 1
 		for jj in range(0, aug):
@@ -183,6 +186,8 @@ for test_name in ['trainfull', 'test']:
                 	if ov_max >= MIN_OVERLAP:
 				gt_i['det'][ngt_max] = 1	
 				cropped_name = os.path.join(index+'_'+str(ngt_max)+'_'+str(ii)+'_'+str(jj)+extension)
+				if test_name == 'test':
+					cropped_name = os.path.join(index+'_'+classes_test[int(gt_i['gt_classes'][ngt_max])]+'_'+str(_boxes[0])+'-'+str(_boxes[1])+'-'+str(_boxes[2])+'-'+str(_boxes[3])+extension)
                         	if not gt_i['difficult'][ngt_max]:
 					saveTxt(test_name, cropped_name, int(gt_i['gt_classes'][ngt_max]))
 					counts[int(gt_i['gt_classes'][ngt_max])] += 1
@@ -191,6 +196,8 @@ for test_name in ['trainfull', 'test']:
 					counts[7] += 1
                 	else:
 				cropped_name = os.path.join(index+'_'+'None'+'_'+str(ii)+'_'+str(jj)+extension)
+				if test_name == 'test':
+                                	cropped_name = os.path.join(index+'_'+'None'+'_'+str(_boxes[0])+'-'+str(_boxes[1])+'-'+str(_boxes[2])+'-'+str(_boxes[3])+extension)
                         	saveTxt(test_name, cropped_name, 0)
 				counts[0] += 1
 			for _ in range(int(jj/2)%4):
@@ -198,8 +205,9 @@ for test_name in ['trainfull', 'test']:
 			if jj%2 == 1:
                                 cropped_ = cropped_.transpose(Image.FLIP_LEFT_RIGHT)
                 	cropped_.save(os.path.join(TRAIN_DATA_ROOT, cropped_name))
-        #add each ground truth to the training set
-	if test_name == '': #'trainfull':
+        '''
+	#add each ground truth to the training set
+	if test_name == 'trainfull':
 	    for jj, gt_boxes in enumerate(gt_i['boxes']):
 		img_filename = os.path.join(index+'_'+str(jj)+extension)
 		try:
@@ -210,4 +218,5 @@ for test_name in ['trainfull', 'test']:
 			#print index, gt_boxes
 			#raise Exception
 			continue
+	'''
     print 'counts', counts
