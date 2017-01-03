@@ -209,7 +209,7 @@ for test_name in ['trainfull', 'test']:
 	#add each ground truth to the training set
 	if test_name == 'trainfull':
 	    for jj, gt_boxes in enumerate(gt_i['boxes']):
-		if gt_i['gt_classes'] != 'rbc':
+		if int(gt_i['gt_classes'][jj]) != 1:
 			img_filename = os.path.join(index+'_'+str(jj)+extension)
 			try:
 				cropped = pil_im.crop((int(gt_boxes[0]), int(gt_boxes[1]), int(gt_boxes[2]), int(gt_boxes[3])))
