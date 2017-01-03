@@ -10,12 +10,16 @@ display results from pkl files
 DET = argv[1]
 test_name = argv[2]
 base_dir = argv[3] #e.g. /home/ubuntu/py-faster-rcnn/output/faster_rcnn_end2end/vgg_cnn_m_1024_faster_rcnn_lr0.001_iter_100000
-THRESHOLD = 0.5
+THRESHOLD = 1.0/3#0.5
 
 print 'detection threshold ', THRESHOLD 
 MIN_OVERLAP = 0.5
-classes = ['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
-#classes = ['__background__', 'rbc', 'other']
+
+ONE_STAGE = False
+if ONE_STAGE:
+	classes = ['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
+else:
+	classes = ['__background__', 'rbc', 'other']
 
 data_path = '/home/ubuntu/try1/data/'
 path = '/home/ubuntu/try1/results/'
@@ -46,6 +50,8 @@ def load_try1_annotation(classes, data_path, index):
                 raise Exception('Error in reading data, line %s:%s'%(str(ix+1), data[ix]))
             #pixel indexes 0-based
             boxes[ix, :] = [x1, y1, x2, y2]
+	    if not ONE_STAGE and cls != 'rbc' and cls != '__background__':
+		cls = 'other'
             gt_classes[ix] = classes.index(cls)
             difficult[ix] = df == 'True'
 

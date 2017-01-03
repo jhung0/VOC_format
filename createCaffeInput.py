@@ -24,10 +24,11 @@ THRESHOLD = 1.0/(len(classes_train))
 print 'detection threshold ', THRESHOLD
 MIN_OVERLAP = 0.5
 data_path = '/home/ubuntu/try1/data/'
+CAFFE_ROOT = '/home/ubuntu/py-R-FCN/caffe'
 image_path = os.path.join(data_path, 'Images')
-TRAIN_DATA_ROOT= '/home/ubuntu/caffe/examples/try1/train'
-VAL_DATA_ROOT='/home/ubuntu/caffe/examples/try1/test'
-DATA = '/home/ubuntu/caffe/data/try1'
+TRAIN_DATA_ROOT= os.path.join(CAFFE_ROOT, 'examples/try1/train')
+VAL_DATA_ROOT=os.path.join(CAFFE_ROOT, 'examples/try1/test')
+DATA = os.path.join(CAFFE_ROOT, 'data/try1')
 INCLUDE_RBCs = False #whether to include detected RBCs
 
 def getDetections(cls, filename, threshold, test_name = 'trainfull', path='/home/ubuntu/try1/results'):
@@ -168,26 +169,26 @@ for test_name in ['trainfull', 'test']:
 			current_class = int(gt_i['gt_classes'][ngt_max])
 		except:
 			current_class = 0
-		'''
+		
 		if max(counts) == counts[current_class]:
-			aug = 1
+			aug = 2 #1
 		elif max(counts)*1.0/4 > counts[current_class]:
 			aug = 8
 		elif max(counts)*1.0/2 > counts[current_class]:
 			aug = 4
 		else: 
 			aug = 2
-		'''
-		aug = 8
+	
+		aug=8	
 		if test_name == 'test':
 			aug = 1
 		for jj in range(0, aug):
 			cropped_ = cropped.copy()
                 	if ov_max >= MIN_OVERLAP:
 				gt_i['det'][ngt_max] = 1	
-				cropped_name = os.path.join(index+'_'+str(ngt_max)+'_'+str(ii)+'_'+str(jj)+extension)
-				if test_name == 'test':
-					cropped_name = os.path.join(index+'_'+classes_test[int(gt_i['gt_classes'][ngt_max])]+'_'+str(_boxes[0])+'-'+str(_boxes[1])+'-'+str(_boxes[2])+'-'+str(_boxes[3])+extension)
+				#cropped_name = os.path.join(index+'_'+str(ngt_max)+'_'+str(ii)+'_'+str(jj)+extension)
+				#if test_name == 'test':
+				cropped_name = os.path.join(index+'_'+classes_test[int(gt_i['gt_classes'][ngt_max])]+'_'+str(_boxes[0])+'-'+str(_boxes[1])+'-'+str(_boxes[2])+'-'+str(_boxes[3])+'_'+str(jj)+extension)
                         	if not gt_i['difficult'][ngt_max]:
 					saveTxt(test_name, cropped_name, int(gt_i['gt_classes'][ngt_max]))
 					counts[int(gt_i['gt_classes'][ngt_max])] += 1
@@ -195,9 +196,9 @@ for test_name in ['trainfull', 'test']:
 					saveTxt('test_diff', cropped_name, 7)
 					counts[7] += 1
                 	else:
-				cropped_name = os.path.join(index+'_'+'None'+'_'+str(ii)+'_'+str(jj)+extension)
-				if test_name == 'test':
-                                	cropped_name = os.path.join(index+'_'+'None'+'_'+str(_boxes[0])+'-'+str(_boxes[1])+'-'+str(_boxes[2])+'-'+str(_boxes[3])+extension)
+				#cropped_name = os.path.join(index+'_'+'None'+'_'+str(ii)+'_'+str(jj)+extension)
+				#if test_name == 'test':
+                                cropped_name = os.path.join(index+'_'+'None'+'_'+str(_boxes[0])+'-'+str(_boxes[1])+'-'+str(_boxes[2])+'-'+str(_boxes[3])+'_'+str(jj)+extension)
                         	saveTxt(test_name, cropped_name, 0)
 				counts[0] += 1
 			for _ in range(int(jj/2)%4):
@@ -205,18 +206,18 @@ for test_name in ['trainfull', 'test']:
 			if jj%2 == 1:
                                 cropped_ = cropped_.transpose(Image.FLIP_LEFT_RIGHT)
                 	cropped_.save(os.path.join(TRAIN_DATA_ROOT, cropped_name))
-        '''
 	#add each ground truth to the training set
 	if test_name == 'trainfull':
 	    for jj, gt_boxes in enumerate(gt_i['boxes']):
-		img_filename = os.path.join(index+'_'+str(jj)+extension)
-		try:
-			cropped = pil_im.crop((int(gt_boxes[0]), int(gt_boxes[1]), int(gt_boxes[2]), int(gt_boxes[3])))
-			cropped.save(os.path.join(TRAIN_DATA_ROOT, img_filename))
-			saveTxt(test_name, img_filename, int(gt_i['gt_classes'][jj]))
-		except:
-			#print index, gt_boxes
-			#raise Exception
-			continue
-	'''
+		if gt_i['gt_classes'] != 'rbc':
+			img_filename = os.path.join(index+'_'+str(jj)+extension)
+			try:
+				cropped = pil_im.crop((int(gt_boxes[0]), int(gt_boxes[1]), int(gt_boxes[2]), int(gt_boxes[3])))
+				cropped.save(os.path.join(TRAIN_DATA_ROOT, img_filename))
+				saveTxt(test_name, img_filename, int(gt_i['gt_classes'][jj]))
+				
+			except:
+				#print index, gt_boxes
+				#raise Exception
+				continue
     print 'counts', counts
