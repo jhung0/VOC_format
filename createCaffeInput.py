@@ -6,6 +6,8 @@ from sys import argv
 from sklearn.metrics import confusion_matrix
 import numpy as np
 import subprocess
+import shutil
+import random
 '''
 Create image and text files to be used for training with caffe
 Has option to not include detections classified as rbc
@@ -24,7 +26,7 @@ THRESHOLD = 1.0/(len(classes_train))
 print 'detection threshold ', THRESHOLD
 MIN_OVERLAP = 0.5
 data_path = '/home/ubuntu/try1/data/'
-CAFFE_ROOT = '/home/ubuntu/py-R-FCN/caffe'
+CAFFE_ROOT = '/home/ubuntu/py-faster-rcnn/caffe-fast-rcnn'
 image_path = os.path.join(data_path, 'Images')
 TRAIN_DATA_ROOT= os.path.join(CAFFE_ROOT, 'examples/try1/train')
 VAL_DATA_ROOT=os.path.join(CAFFE_ROOT, 'examples/try1/test')
@@ -69,6 +71,8 @@ def getGroundTruth(data_path, classes, test_name='trainfull'):
 def saveTxt(test_name, img_filename, label, data_dir=DATA):
 	if test_name == 'trainfull':
 		test_name = 'train'
+	if not os.path.exists(data_dir):
+    		os.makedirs(data_dir)
 	with open(os.path.join(data_dir, test_name+'.txt'), "a+") as f:
 		f.write(img_filename + ' ' + str(label)+'\n')
 		
@@ -112,13 +116,17 @@ def load_try1_annotation(classes, data_path, index):
 #clear existing files
 for name in [TRAIN_DATA_ROOT, DATA, VAL_DATA_ROOT]:
 	clear_dir = name
+	if os.path.exists(clear_dir):
+		shutil.rmtree(clear_dir)
+	'''
     	for f in os.listdir(clear_dir):
 		try:
 			os.remove(os.path.join(clear_dir, f))
 		except:
 			for fp in os.listdir(os.path.join(clear_dir, f)):
+				print clear_dir, f
 				os.remove(os.path.join(clear_dir, f, fp))
-
+	'''
 for test_name in ['trainfull', 'test']:
     print test_name
     if test_name == 'test':
@@ -136,6 +144,7 @@ for test_name in ['trainfull', 'test']:
 	filename = str(DET)+'_det_'+test_name+'_'+cls+'.txt'
 	filtered_detections.extend(getDetections(cls, filename, THRESHOLD, test_name))
     gt = getGroundTruth(data_path, classes_test, test_name)
+
     for gt_i in gt:
 	index = gt_i['index']
 	extension='.jpg' 
@@ -149,6 +158,22 @@ for test_name in ['trainfull', 'test']:
 	#index = index.split('/')
 	#index = index[0]+'-'+index[1]
         print index
+	'''
+	#add each ground truth to the training set
+	if test_name == 'trainfull':
+            for jj, gt_boxes in enumerate(gt_i['boxes']):
+                if int(gt_i['gt_classes'][jj]) not in [1, 7]:
+                        img_filename = os.path.join(index+'_'+str(jj)+extension)
+                        try:
+                                cropped = pil_im.crop((int(gt_boxes[0]), int(gt_boxes[1]), int(gt_boxes[2]), int(gt_boxes[3])))
+                                cropped.save(os.path.join(TRAIN_DATA_ROOT, img_filename))
+                                saveTxt(test_name, img_filename, int(gt_i['gt_classes'][jj]))
+                                counts[int(gt_i['gt_classes'][jj])] += 1
+                        except:
+                                #print index, gt_boxes
+                                #raise Exception
+                                continue
+	'''
 	#for each detection (of any class), find if there's a matching ground truth which has not yet been matched
         for ii, _boxes in enumerate(filtered_detections_image['boxes']):
                 ov_max = -float("inf")
@@ -171,7 +196,7 @@ for test_name in ['trainfull', 'test']:
 			current_class = 0
 		
 		if max(counts) == counts[current_class]:
-			aug = 2 #1
+			aug = 1
 		elif max(counts)*1.0/4 > counts[current_class]:
 			aug = 8
 		elif max(counts)*1.0/2 > counts[current_class]:
@@ -179,9 +204,15 @@ for test_name in ['trainfull', 'test']:
 		else: 
 			aug = 2
 	
-		aug=8	
+		#aug=8	
 		if test_name == 'test':
 			aug = 1
+		
+		#randomly rotate
+		rand_rotate = random.randint(0,3)
+		if test_name != 'test':
+                   for _ in range(rand_rotate):
+                	cropped = cropped.rotate(90)
 		for jj in range(0, aug):
 			cropped_ = cropped.copy()
                 	if ov_max >= MIN_OVERLAP:
@@ -193,7 +224,7 @@ for test_name in ['trainfull', 'test']:
 					saveTxt(test_name, cropped_name, int(gt_i['gt_classes'][ngt_max]))
 					counts[int(gt_i['gt_classes'][ngt_max])] += 1
 				elif test_name == 'test':
-					saveTxt('test_diff', cropped_name, 7)
+					saveTxt('test_diff', cropped_name, len(classes_test))
 					counts[7] += 1
                 	else:
 				#cropped_name = os.path.join(index+'_'+'None'+'_'+str(ii)+'_'+str(jj)+extension)
@@ -205,19 +236,8 @@ for test_name in ['trainfull', 'test']:
                         	cropped_ = cropped_.rotate(90)
 			if jj%2 == 1:
                                 cropped_ = cropped_.transpose(Image.FLIP_LEFT_RIGHT)
-                	cropped_.save(os.path.join(TRAIN_DATA_ROOT, cropped_name))
-	#add each ground truth to the training set
-	if test_name == 'trainfull':
-	    for jj, gt_boxes in enumerate(gt_i['boxes']):
-		if int(gt_i['gt_classes'][jj]) != 1:
-			img_filename = os.path.join(index+'_'+str(jj)+extension)
-			try:
-				cropped = pil_im.crop((int(gt_boxes[0]), int(gt_boxes[1]), int(gt_boxes[2]), int(gt_boxes[3])))
-				cropped.save(os.path.join(TRAIN_DATA_ROOT, img_filename))
-				saveTxt(test_name, img_filename, int(gt_i['gt_classes'][jj]))
-				
-			except:
-				#print index, gt_boxes
-				#raise Exception
-				continue
+                	cropped_name = os.path.join(TRAIN_DATA_ROOT, cropped_name)
+			if not os.path.exists(os.path.dirname(cropped_name)):
+    				os.makedirs(os.path.dirname(cropped_name))
+			cropped_.save(cropped_name)
     print 'counts', counts
