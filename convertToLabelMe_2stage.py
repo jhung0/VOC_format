@@ -19,8 +19,11 @@ import matplotlib
 matplotlib.use('Agg')
 import caffe
 from fast_rcnn.config import cfg, cfg_from_file, cfg_from_list
-from fast_rcnn.test import im_detect
+from fast_rcnn.test import im_detect, apply_nms
 import pprint
+import numpy as np
+import heapq
+import cPickle
 
 '''
 converts detections from 2 stage model to LabelMe format so that results can be viewed on LabelMe
@@ -37,7 +40,13 @@ def parse_args():
     parser.add_argument('--prototxt1', dest='prototxt1',
                         help='prototxt file defining the network',
                         default=None, type=str)
+    parser.add_argument('--prototxt2', dest='prototxt2',
+                        help='prototxt file defining the network',
+                        default=None, type=str)
     parser.add_argument('--model1', dest='caffemodel1',
+                        help='model to test',
+                        default=None, type=str)
+    parser.add_argument('--model2', dest='caffemodel2',
                         help='model to test',
                         default=None, type=str)
     parser.add_argument('--cfg1', dest='cfg_file1',
@@ -63,27 +72,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def apply_nms(all_boxes, thresh):
-    """Apply non-maximum suppression to all predicted boxes output by the
-    test_net method.
-    """
-    num_classes = len(all_boxes)
-    num_images = len(all_boxes[0])
-    nms_boxes = [[[] for _ in xrange(num_images)]
-                 for _ in xrange(num_classes)]
-    for cls_ind in xrange(num_classes):
-        for im_ind in xrange(num_images):
-            dets = all_boxes[cls_ind][im_ind]
-            if dets == []:
-                continue
-            keep = nms(dets, thresh)
-	    print 'keep', len(keep)
-            if len(keep) == 0:
-                continue
-            nms_boxes[cls_ind][im_ind] = dets[keep, :].copy()
-    return nms_boxes
-
-def stage_one(file_, net, classes, THRESHOLD=1.0/3):
+def stage_one(file_, net, classes, THRESHOLD=1.0/3, num_images = 1, output_dir = '/home/ubuntu/py-faster-rcnn/output' ):
     '''
 	run one image through object detector to classify each cell as background, rbc, or other
 	Return: all boxes with score above THRESHOLD
@@ -96,21 +85,22 @@ def stage_one(file_, net, classes, THRESHOLD=1.0/3):
     # all detections are collected into:
     #    all_boxes[cls] = N x 5 array of detections in
     #    (x1, y1, x2, y2, score)
-    all_boxes = [[] for _ in xrange(num_classes)]
+    all_boxes = [[[] for _ in xrange(num_images)] for _ in xrange(num_classes)]
 
-    # filter out any ground truth boxes
-    if cfg.TEST.HAS_RPN:
+    for i in xrange(num_images):
+        # filter out any ground truth boxes
+        if cfg.TEST.HAS_RPN:
             box_proposals = None
-    else:
+        else:
             raise Exception("HAS_RPN is False")
-    print 'image path at', file_
-    im = cv2.imread(file_)
-    _t['im_detect'].tic()
-    scores, boxes = im_detect(net, im, box_proposals)
-    _t['im_detect'].toc()
+        print 'image path at', file_
+        im = cv2.imread(file_)
+        _t['im_detect'].tic()
+        scores, boxes = im_detect(net, im, box_proposals)
+        _t['im_detect'].toc()
 
-    _t['misc'].tic()
-    for j in xrange(1, num_classes):
+        _t['misc'].tic()
+        for j in xrange(1, num_classes):
             inds = np.where(scores[:, j] > THRESHOLD)[0]
             cls_scores = scores[inds, j]
             cls_boxes = boxes[inds, j*4:(j+1)*4]
@@ -139,8 +129,9 @@ def stage_one(file_, net, classes, THRESHOLD=1.0/3):
 
     #only keep boxes with scores above the threshold
     for j in xrange(1, num_classes):
-            inds = np.where(all_boxes[j][:, -1] > THRESHOLD)[0]
-            all_boxes[j] = all_boxes[j][inds, :]
+	for i in xrange(num_images):
+            inds = np.where(all_boxes[j][i][:, -1] > THRESHOLD)[0]
+            all_boxes[j][i] = all_boxes[j][i][inds, :]
 
     det_file = os.path.join(output_dir, 'detections.pkl')
     with open(det_file, 'wb') as f:
@@ -152,7 +143,24 @@ def stage_one(file_, net, classes, THRESHOLD=1.0/3):
         cPickle.dump(nms_dets, f, cPickle.HIGHEST_PROTOCOL)
     return nms_dets
 
-def stage_two():
+def stage_two(dets, net, classes):
+    '''
+	run detections from one image through image classifier
+	Return: all detections 
+    '''
+    transformer = caffe.io.Transformer({'data': net.blobs['data'].data.shape})
+    transformer.set_mean('data', np.array([193.30, 135.15, 153.60  ]))
+    transformer.set_transpose('data', (2,0,1))
+    transformer.set_raw_scale('data', 255.0)
+    transformer.set_channel_swap('data', (2,1,0))
+
+    
+    img = caffe.io.load_image()
+    net.blobs['data'].reshape(1, 3, 227,227)
+    net.blobs['data'].data[...] = transformer.preprocess('data', img)
+    output = net.forward()
+    
+    predicted_class = np.array([np.argmax(output['prob'])])
     return 0
 
 def createXML(LabelMe_path, file_):
@@ -221,10 +229,9 @@ def createXML(LabelMe_path, file_):
 
 def get_files(ImageSet_test):
     test_files = []
-    base_path = ImageSet_test.split("ImageSet")[0]
     with open(ImageSet_test) as f:
         for file_ in f.readlines():
-            test_files.append(os.path.join(base_path, "Images", file_.strip()))
+            test_files.append(os.path.join(imageSet_test.split("ImageSet")[0], "Images", file_.strip()))
     return test_files
 
 
@@ -254,17 +261,28 @@ if __name__ == '__main__':
     print 'prototxt ', args.prototxt1
     print 'caffemodel ', args.caffemodel1
     net1.name = os.path.splitext(os.path.basename(args.caffemodel1))[0]
-    print net1.blobs['data']
+    
+    net2 = caffe.Net(args.prototxt2, args.caffemodel2, caffe.TEST)
+    print 'prototxt ', args.prototxt2
+    print 'caffemodel ', args.caffemodel2
+    net2.name = os.path.splitext(os.path.basename(args.caffemodel2))
+ 
     #get test image filenames
-    test_files = get_files(args.images)
+    imageSet_test = args.images
+    test_files = get_files(imageSet_test)
+    base_path = imageSet_test.split("ImageSet")[0]
+
     LabelMe_path = '/var/www/html/LabelMeAnnotationTool'
     file_ext = ".jpg"
+    classes1 = args.classes1
+    classes2 = args.classes2
+
     #for each image in the list, run through stage 1, then run through stage 2, then convert results and create xml file
     for file_index, file_ in enumerate(test_files):
-	file_ = file_+file_ext
-	stage_one(file_, net1, args.classes1, THRESHOLD=1.0/len(args.classes1))
-	#stage_two(net2)
-	#createXML(LabelMe_path, file_)
+	nms_dets = stage_one(os.path.join(base_path, file_+file_ext), net1, classes1, THRESHOLD=1.0/len(classes1), output_dir='/home/ubuntu/py-faster-rcnn/output')
+	print nms_dets[classes1.index('other')][0]	
+	stage2_dets = stage_two(nms_dets[classes1.index('other')][0], net2)
+	#createXML(LabelMe_path, file_, nms_dets, stage2_dets)
 
 
 

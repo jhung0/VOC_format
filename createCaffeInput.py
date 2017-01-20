@@ -158,7 +158,7 @@ for test_name in ['trainfull', 'test']:
 	#index = index.split('/')
 	#index = index[0]+'-'+index[1]
         print index
-	'''
+	'''	
 	#add each ground truth to the training set
 	if test_name == 'trainfull':
             for jj, gt_boxes in enumerate(gt_i['boxes']):
