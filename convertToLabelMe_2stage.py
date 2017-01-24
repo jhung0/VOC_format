@@ -24,6 +24,8 @@ import pprint
 import numpy as np
 import heapq
 import cPickle
+from PIL import Image
+import skimage
 
 '''
 converts detections from 2 stage model to LabelMe format so that results can be viewed on LabelMe
@@ -65,6 +67,8 @@ def parse_args():
     parser.add_argument('--classes2', dest='classes2',
 			help='list of class names', default=['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu'],
 			type=list) 
+    parser.add_argument('--output', dest='output_dir',
+			help='output directory',default='/home/ubuntu/py-faster-rcnn/output', type=str)
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
@@ -143,7 +147,7 @@ def stage_one(file_, net, classes, THRESHOLD=1.0/3, num_images = 1, output_dir =
         cPickle.dump(nms_dets, f, cPickle.HIGHEST_PROTOCOL)
     return nms_dets
 
-def stage_two(dets, net, classes):
+def stage_two(file_path, dets, net, classes):
     '''
 	run detections from one image through image classifier
 	Return: all detections 
@@ -154,24 +158,84 @@ def stage_two(dets, net, classes):
     transformer.set_raw_scale('data', 255.0)
     transformer.set_channel_swap('data', (2,1,0))
 
-    
-    img = caffe.io.load_image()
-    net.blobs['data'].reshape(1, 3, 227,227)
-    net.blobs['data'].data[...] = transformer.preprocess('data', img)
-    output = net.forward()
-    
-    predicted_class = np.array([np.argmax(output['prob'])])
-    return 0
+    probs = np.zeros((len(dets), len(classes)))
 
-def createXML(LabelMe_path, file_):
+    full_im = Image.open(file_path)
+    #full_im = caffe.io.load_image(file_path)
+    full_im = full_im.copy()    #caffe.io.load_image()
+    for det_index, det in enumerate(dets):
+	print det_index, det
+    	#img = full_im[int(det[1]):int(det[3]), int(det[0]):int(det[2]), :]
+	img = full_im.crop((int(det[0]), int(det[1]), int(det[2]), int(det[3])))
+	#print img*255
+	#print np.array(img2)
+	#img = caffe.io.resize_image(img, (227, 227))
+	#img = cv2.resize(img, (227, 227))
+	#cv2.imwrite('/home/ubuntu/stage2.png', img2)
+	img = img.resize((227, 227), Image.BILINEAR)
+	#img = np.array(img)*1.0/255
+	#img = img.astype(np.float32)
+	#print np.array(img).shape
+	#im = Image.fromarray(im)
+	img.save('/home/ubuntu/stage2.jpg')
+	img = caffe.io.load_image('/home/ubuntu/stage2.jpg')
+	#print img2
+    	net.blobs['data'].reshape(1, 3, 227,227)
+    	net.blobs['data'].data[...] = transformer.preprocess('data', np.array(img))#np.array(img))
+    	output = net.forward()
+	print 'output ', output['prob']    
+    	probs[det_index] = output['prob']
+    return probs
+
+def writeXML(root, box, cls, attributes_text, index):
+	'''
+	write to Element Tree
+	'''
+	#print 'box ', box
+        object_ = ET.Element('object')
+        root.append(object_)
+        name_ = ET.SubElement(object_, 'name')
+        name_.text = cls
+        deleted_ = ET.SubElement(object_, 'deleted')
+        deleted_.text = "0"
+        verified_ = ET.SubElement(object_, 'verified')
+        verified_.text = "0"
+        occluded_ = ET.SubElement(object_, 'occluded')
+        occluded_.text = 'no'
+        attributes_ = ET.SubElement(object_, 'attributes')
+        attributes_.text = attributes_text
+        parts_ = ET.SubElement(object_, 'parts')
+        hasparts_ = ET.SubElement(parts_, 'hasparts')
+        ispartof_ = ET.SubElement(parts_, 'ispartof')
+
+        date_ = ET.SubElement(object_, 'date')
+        date_.text = str(0)
+        id_ = ET.SubElement(object_, 'id')
+        id_.text = str(index)
+        type_ = ET.SubElement(object_, 'type')
+        type_.text = 'bounding_box'
+        polygon_ = ET.SubElement(object_, 'polygon')
+        username_ = ET.SubElement(polygon_, 'username')
+        username_.text = 'anonymous'
+        for i in range(4):
+                    pt_ = ET.SubElement(polygon_, 'pt')
+                    x_ = ET.SubElement(pt_, 'x')
+                    x_.text = str(box[((i + i%2)%4)])
+                    y_ = ET.SubElement(pt_, 'y')
+                    y_.text = str(box[(i + (i+1)%2)])
+
+def createXML(LabelMe_path, file_, stage1_dets, stage2_probs, classes):
     '''
 	create LabelMe xml file from detection coordinates 
     '''
+    print LabelMe_path, file_
     LabelMe_annotation_dir = os.path.join(LabelMe_path, 'Annotations')    
+    file_ = file_.split('Images/')[1]
+    print file_
     image_dir = file_.split('/')[0]
     #make LabelMe xml annotation file
     LabelMe_file = os.path.join(LabelMe_annotation_dir, file_+'.xml')
-    #print LabelMe_file
+    print LabelMe_file
     #clear existing annotations
     tree = ET.parse(LabelMe_file)
     root = tree.getroot()
@@ -179,52 +243,23 @@ def createXML(LabelMe_path, file_):
     for obj in root.findall('object'):
             root.remove(obj)
     #get detection coordinates
-    for cls in range(1, len(classes)):
-        filtered_boxes = []
-        #detection_file = str(DET) + '_det_'+test_name+'_'+classes[cls]+'.txt'
-        with open(os.path.join(path, detection_file), 'r') as f:
-            for line in f.readlines():
-                line_list = line.split()
-                #if file name matches test file
-                if line_list[0].lower() == file_.lower():
-                    #if the detection has probability above the threshold
-                    if float(line_list[1]) >= THRESHOLD:
-                        print line_list
-                        filtered_boxes.append([float(i) for i in line_list[1:]])
-        #for each set of coordinates, create object instance
-        for index, box in enumerate(filtered_boxes):
-                object_ = ET.Element('object')
-                root.append(object_)
-                name_ = ET.SubElement(object_, 'name')
-                name_.text = classes[cls]
-                deleted_ = ET.SubElement(object_, 'deleted')
-                deleted_.text = "0"
-                verified_ = ET.SubElement(object_, 'verified')
-                verified_.text = "0"
-                occluded_ = ET.SubElement(object_, 'occluded')
-                occluded_.text = 'no'
-                attributes_ = ET.SubElement(object_, 'attributes')
-                attributes_.text = str(box[0])
-                parts_ = ET.SubElement(object_, 'parts')
-                hasparts_ = ET.SubElement(parts_, 'hasparts')
-                ispartof_ = ET.SubElement(parts_, 'ispartof')
+    rbc_dets = stage1_dets[1][0]
+    other_dets = stage1_dets[2][0]
+    print rbc_dets[0]
+    #for each set of coordinates, create object instance
+    for index, box in enumerate(rbc_dets):
+	box = rbc_dets[index][:4]
+	#print box
+	attributes = str(rbc_dets[index][-1])
+	writeXML(root, box, classes[1], attributes, index)
+    for index_other, box in enumerate(other_dets):
+	index += 1
+	box = other_dets[index_other][:4]
+	attributes = str(other_dets[index_other][-1])
+	print stage2_probs[index_other], np.argmax(stage2_probs[index_other])
+	writeXML(root, box, classes[np.argmax(stage2_probs[index_other])], attributes, index)
 
-                date_ = ET.SubElement(object_, 'date')
-                date_.text = str(DET)
-                id_ = ET.SubElement(object_, 'id')
-                id_.text = str(index)
-                type_ = ET.SubElement(object_, 'type')
-                type_.text = 'bounding_box'
-                polygon_ = ET.SubElement(object_, 'polygon')
-                username_ = ET.SubElement(polygon_, 'username')
-                username_.text = 'anonymous'
-                for i in range(4):
-                    pt_ = ET.SubElement(polygon_, 'pt')
-                    x_ = ET.SubElement(pt_, 'x')
-                    x_.text = str(box[1+((i + i%2)%4)])
-                    y_ = ET.SubElement(pt_, 'y')
-                    y_.text = str(box[1+(i + (i+1)%2)])
-        tree.write(LabelMe_file)
+    tree.write(LabelMe_file)
     os.chmod(LabelMe_file, 0o777)
 
 def get_files(ImageSet_test):
@@ -269,7 +304,7 @@ if __name__ == '__main__':
  
     #get test image filenames
     imageSet_test = args.images
-    test_files = get_files(imageSet_test)
+    test_files = get_files(imageSet_test)#['/home/ubuntu/try1/data/Images/g8_t1_up/g6010001']
     base_path = imageSet_test.split("ImageSet")[0]
 
     LabelMe_path = '/var/www/html/LabelMeAnnotationTool'
@@ -279,10 +314,12 @@ if __name__ == '__main__':
 
     #for each image in the list, run through stage 1, then run through stage 2, then convert results and create xml file
     for file_index, file_ in enumerate(test_files):
-	nms_dets = stage_one(os.path.join(base_path, file_+file_ext), net1, classes1, THRESHOLD=1.0/len(classes1), output_dir='/home/ubuntu/py-faster-rcnn/output')
-	print nms_dets[classes1.index('other')][0]	
-	stage2_dets = stage_two(nms_dets[classes1.index('other')][0], net2)
-	#createXML(LabelMe_path, file_, nms_dets, stage2_dets)
+	full_file = os.path.join(base_path, file_+file_ext)
+	print full_file
+	nms_dets = stage_one(full_file, net1, classes1, THRESHOLD=1.0/len(classes1), output_dir=args.output_dir)
+	stage2_probs = stage_two(full_file, nms_dets[classes1.index('other')][0], net2, classes2)
+	#print 'stage 2', stage2_dets
+	createXML(LabelMe_path, file_, nms_dets, stage2_probs, classes2)
 
 
 
