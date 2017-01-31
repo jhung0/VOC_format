@@ -28,8 +28,8 @@ from PIL import Image
 import skimage
 
 '''
-converts detections from 2 stage model to LabelMe format so that results can be viewed on LabelMe
-python convertToLabelMe_2stage.py ([--images image_list.txt]) [--cfg1 experiments/cfgs/faster_rcnn_end2end.yml] [--prototxt1 xxx.prototxt] [--model1 xxx.caffemodel] [--prototxt2 deploy.prototxt] [--model2 xxx.caffemodel]
+runs images through 2 stage model, saves label matrices
+python run2stage.py ([--images image_list.txt]) [--cfg1 experiments/cfgs/faster_rcnn_end2end.yml] [--prototxt1 xxx.prototxt] [--model1 xxx.caffemodel] [--prototxt2 deploy.prototxt] [--model2 xxx.caffemodel]
 '''
 
 def parse_args():
@@ -76,11 +76,16 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def stage_one(file_, net, classes, THRESHOLD=1.0/3, num_images = 1, output_dir = '/home/ubuntu/py-faster-rcnn/output' ):
+def StageOne(file_, prototxt, model, classes, THRESHOLD=1.0/3, num_images = 1, output_dir = '/home/ubuntu/py-faster-rcnn/output' ):
     '''
 	run one image through object detector to classify each cell as background, rbc, or other
 	Return: all boxes with score above THRESHOLD
     '''
+    net = caffe.Net(prototxt, model, caffe.TEST)
+    print 'prototxt ', prototxt
+    print 'caffemodel ', model
+    net.name = os.path.splitext(os.path.basename(model))[0]
+ 
     _t = {'im_detect' : Timer(), 'misc' : Timer()}
     # top_scores will hold one minheap of scores per class (used to enforce
     # the max_per_set constraint)
@@ -114,6 +119,12 @@ def stage_one(file_, net, classes, THRESHOLD=1.0/3, num_images = 1, output_dir =
             # push new scores onto the minheap
             for val in cls_scores:
                 heapq.heappush(top_scores[j], val)
+            # if we've collected more than the max number of detection,
+            # then pop items off the minheap and update the class threshold
+            #if len(top_scores[j]) > max_per_set:
+            #    while len(top_scores[j]) > max_per_set:
+            #        heapq.heappop(top_scores[j])
+            #    thresh[j] = top_scores[j][0]
 
             all_boxes[j][i] = \
                     np.hstack((cls_boxes, cls_scores[:, np.newaxis])) \
@@ -141,23 +152,28 @@ def stage_one(file_, net, classes, THRESHOLD=1.0/3, num_images = 1, output_dir =
         cPickle.dump(nms_dets, f, cPickle.HIGHEST_PROTOCOL)
     return nms_dets
 
-def stage_two(file_path, dets, net, classes):
+def StageTwo(file_path, prototxt, model, detections, classes):
     '''
 	run detections from one image through image classifier
 	Return: all detections 
     '''
+    net = caffe.Net(prototxt, model, caffe.TEST)
+    print 'prototxt ', prototxt
+    print 'caffemodel ', model
+    net.name = os.path.splitext(os.path.basename(model))
+
     transformer = caffe.io.Transformer({'data': net.blobs['data'].data.shape})
-    transformer.set_mean('data', np.array([189.97, 133.83, 149.26 ]))
+    transformer.set_mean('data', np.array([193.30, 135.15, 153.60  ]))
     transformer.set_transpose('data', (2,0,1))
     transformer.set_raw_scale('data', 255.0)
     transformer.set_channel_swap('data', (2,1,0))
 
-    probs = np.zeros((len(dets), len(classes)))
+    probs = np.zeros((len(detections), len(classes)))
 
     full_im = Image.open(file_path)
     #full_im = caffe.io.load_image(file_path)
     full_im = full_im.copy()    #caffe.io.load_image()
-    for det_index, det in enumerate(dets):
+    for det_index, det in enumerate(detections):
 	print det_index, det
     	#img = full_im[int(det[1]):int(det[3]), int(det[0]):int(det[2]), :]
 	img = full_im.crop((int(det[0]), int(det[1]), int(det[2]), int(det[3])))
@@ -166,7 +182,7 @@ def stage_two(file_path, dets, net, classes):
 	#img = caffe.io.resize_image(img, (227, 227))
 	#img = cv2.resize(img, (227, 227))
 	#cv2.imwrite('/home/ubuntu/stage2.png', img2)
-	#img = img.resize((227, 227), Image.BILINEAR)
+	img = img.resize((227, 227), Image.BILINEAR)
 	#img = np.array(img)*1.0/255
 	#img = img.astype(np.float32)
 	#print np.array(img).shape
@@ -175,13 +191,13 @@ def stage_two(file_path, dets, net, classes):
 	img = caffe.io.load_image('/home/ubuntu/stage2.jpg')
 	#print img2
     	net.blobs['data'].reshape(1, 3, 227,227)
-    	net.blobs['data'].data[...] = transformer.preprocess('data', img)#np.array(img))
+    	net.blobs['data'].data[...] = transformer.preprocess('data', np.array(img))#np.array(img))
     	output = net.forward()
 	print 'output ', output['prob']    
     	probs[det_index] = output['prob']
     return probs
 
-def writeXML(root, box, cls, attributes_text, index):
+def WriteXml(root, box, cls, attributes_text, index):
 	'''
 	write to Element Tree
 	'''
@@ -218,7 +234,7 @@ def writeXML(root, box, cls, attributes_text, index):
                     y_ = ET.SubElement(pt_, 'y')
                     y_.text = str(box[(i + (i+1)%2)])
 
-def createXML(LabelMe_path, file_, stage1_dets, stage2_probs, classes):
+def CreateXml(LabelMe_path, file_, stage1_dets, stage2_probs, classes):
     '''
 	create LabelMe xml file from detection coordinates 
     '''
@@ -256,11 +272,58 @@ def createXML(LabelMe_path, file_, stage1_dets, stage2_probs, classes):
     tree.write(LabelMe_file)
     os.chmod(LabelMe_file, 0o777)
 
+
+def WriteSvg(box, cls, score):
+        '''
+        write to Element Tree
+        '''
+        #print 'box ', box
+        rect_ = ET.Element('rect')
+        rect_.set('class', cls)
+        rect_.set('score', score)
+        rect_.set('x', box[0])
+	rect_.set('y', box[1])
+	rect_.set('width', box[2]-box[0])
+	rect_.set('height', box[3]-box[1])
+	return rect_
+
+def CreateSvg(output, file_, detections, probs):
+    '''
+	create svg using original image, detections, probability distributions and save to output
+    '''
+    file_ = file_.split(".")[0] + '.svg'
+
+    #clear existing annotations
+    tree = ET.parse(output)
+    root = tree.getroot()
+    for obj in root.findall('rect'):
+            root.remove(obj)
+    #get detection coordinates
+    rbc_dets = stage1_dets[1][0]
+    other_dets = stage1_dets[2][0]
+
+    #for each set of coordinates, create object instance
+    for index, box in enumerate(rbc_dets):
+        box = rbc_dets[index][:4]
+        #print box
+        attributes = str(rbc_dets[index][-1])
+        root.append(WriteSvg(root, box, classes[1], ))
+    for index_other, box in enumerate(other_dets):
+        index += 1
+        box = other_dets[index_other][:4]
+        attributes = str(other_dets[index_other][-1])
+        print stage2_probs[index_other], np.argmax(stage2_probs[index_other])
+        root.append(WriteSvg(box, classes[np.argmax(stage2_probs[index_other])], ))
+
+    tree.write(output)
+    os.chmod(output, 0o777)
+    return 0
+
 def get_files(ImageSet_test):
     test_files = []
     with open(ImageSet_test) as f:
         for file_ in f.readlines():
-            test_files.append(os.path.join(imageSet_test.split("ImageSet")[0], "Images", file_.strip()))
+            test_files.append(file_.strip())
     return test_files
 
 
@@ -286,39 +349,20 @@ if __name__ == '__main__':
 
     caffe.set_mode_gpu()
     caffe.set_device(args.gpu_id)
-    net1 = caffe.Net(args.prototxt1, args.caffemodel1, caffe.TEST)
-    print 'prototxt ', args.prototxt1
-    print 'caffemodel ', args.caffemodel1
-    net1.name = os.path.splitext(os.path.basename(args.caffemodel1))[0]
     
-    net2 = caffe.Net(args.prototxt2, args.caffemodel2, caffe.TEST)
-    print 'prototxt ', args.prototxt2
-    print 'caffemodel ', args.caffemodel2
-    net2.name = os.path.splitext(os.path.basename(args.caffemodel2))
- 
     #get test image filenames
     imageSet_test = args.images
-    test_files = get_files(imageSet_test)#['/home/ubuntu/try1/data/Images/g8_t1_up/g6010001']
-    base_path = imageSet_test.split("ImageSet")[0]
+    test_files = get_files(imageSet_test)#['/home/ubuntu/try1/data/Images/g8_t1_up/g6010001.jpg']
 
-    LabelMe_path = '/var/www/html/LabelMeAnnotationTool'
-    file_ext = ".jpg"
     classes1 = args.classes1
     classes2 = args.classes2
 
-    det_count = 0
     #for each image in the list, run through stage 1, then run through stage 2, then convert results and create xml file
     for file_index, file_ in enumerate(test_files):
-	full_file = os.path.join(base_path, file_+file_ext)
-	print full_file
-	nms_dets = stage_one(full_file, net1, classes1, THRESHOLD=1.0/len(classes1), output_dir=args.output_dir)
-	det_count += len(nms_dets[classes1.index('other')][0])
-	stage2_probs = stage_two(full_file, nms_dets[classes1.index('other')][0], net2, classes2)
+	nms_dets = StageOne(file_, args.prototxt1, args.caffemodel1, classes1, THRESHOLD=1.0/len(classes1), output_dir=args.output_dir)
+	stage2_probs = StageTwo(file_, args.prototxt2, args.caffemodel2, nms_dets[classes1.index('other')][0], classes2)
 	#print 'stage 2', stage2_dets
-	createXML(LabelMe_path, file_, nms_dets, stage2_probs, classes2)
-
-print det_count
-print len(test_files)
+	CreateSvg()
 
 
 

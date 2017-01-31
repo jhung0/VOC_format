@@ -158,7 +158,7 @@ for test_name in ['trainfull', 'test']:
 	#index = index.split('/')
 	#index = index[0]+'-'+index[1]
         print index
-	'''	
+		
 	#add each ground truth to the training set
 	if test_name == 'trainfull':
             for jj, gt_boxes in enumerate(gt_i['boxes']):
@@ -173,7 +173,7 @@ for test_name in ['trainfull', 'test']:
                                 #print index, gt_boxes
                                 #raise Exception
                                 continue
-	'''
+	
 	#for each detection (of any class), find if there's a matching ground truth which has not yet been matched
         for ii, _boxes in enumerate(filtered_detections_image['boxes']):
                 ov_max = -float("inf")
@@ -204,7 +204,7 @@ for test_name in ['trainfull', 'test']:
 		else: 
 			aug = 2
 	
-		#aug=8	
+		aug=8	
 		if test_name == 'test':
 			aug = 1
 		
