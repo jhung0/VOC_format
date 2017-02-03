@@ -279,7 +279,7 @@ def WriteSvg(box, cls, score):
         '''
         #print 'box ', box
         rect_ = ET.Element('rect')
-        rect_.set('class', cls)
+        rect_.set('description', cls)
         rect_.set('score', score)
         rect_.set('x', box[0])
 	rect_.set('y', box[1])
@@ -287,33 +287,38 @@ def WriteSvg(box, cls, score):
 	rect_.set('height', box[3]-box[1])
 	return rect_
 
-def CreateSvg(output, file_, detections, probs):
+def CreateSvg(output_dir, file_, detections, probs):
     '''
 	create svg using original image, detections, probability distributions and save to output
     '''
-    file_ = file_.split(".")[0] + '.svg'
+    file_ = os.path.basename(file_.rsplit(".",1)[0]) + '.svg'
+    output = os.path.join(output_dir, file_)
 
-    #clear existing annotations
-    tree = ET.parse(output)
-    root = tree.getroot()
-    for obj in root.findall('rect'):
+    try:
+    	#clear existing annotations
+    	tree = ET.parse(output)
+    	root = tree.getroot()
+    	for obj in root.findall('rect'):
             root.remove(obj)
+    except:
+	root = ET.Element('svg')
+	tree = ET.ElementTree(root)
     #get detection coordinates
-    rbc_dets = stage1_dets[1][0]
-    other_dets = stage1_dets[2][0]
+    rbc_dets = detections[1][0]
+    other_dets = detections[2][0]
 
     #for each set of coordinates, create object instance
     for index, box in enumerate(rbc_dets):
-        box = rbc_dets[index][:4]
+        box = rbc_dets[index]
         #print box
         attributes = str(rbc_dets[index][-1])
-        root.append(WriteSvg(root, box, classes[1], ))
+        root.append(WriteSvg(box[:4], classes[1], box[4]))
     for index_other, box in enumerate(other_dets):
         index += 1
         box = other_dets[index_other][:4]
         attributes = str(other_dets[index_other][-1])
         print stage2_probs[index_other], np.argmax(stage2_probs[index_other])
-        root.append(WriteSvg(box, classes[np.argmax(stage2_probs[index_other])], ))
+        root.append(WriteSvg(box[:4], classes[np.argmax(stage2_probs[index_other])], box[4]))
 
     tree.write(output)
     os.chmod(output, 0o777)
@@ -362,7 +367,7 @@ if __name__ == '__main__':
 	nms_dets = StageOne(file_, args.prototxt1, args.caffemodel1, classes1, THRESHOLD=1.0/len(classes1), output_dir=args.output_dir)
 	stage2_probs = StageTwo(file_, args.prototxt2, args.caffemodel2, nms_dets[classes1.index('other')][0], classes2)
 	#print 'stage 2', stage2_dets
-	CreateSvg()
+	CreateSvg(args.output_dir, file_, nms_dets, stage2_probs)
 
 
 
