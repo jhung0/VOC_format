@@ -26,6 +26,7 @@ import heapq
 import cPickle
 from PIL import Image
 import skimage
+import uuid
 
 '''
 runs images through 2 stage model, saves label matrices
@@ -175,21 +176,9 @@ def StageTwo(file_path, prototxt, model, detections, classes):
     full_im = full_im.copy()    #caffe.io.load_image()
     for det_index, det in enumerate(detections):
 	print det_index, det
-    	#img = full_im[int(det[1]):int(det[3]), int(det[0]):int(det[2]), :]
 	img = full_im.crop((int(det[0]), int(det[1]), int(det[2]), int(det[3])))
-	#print img*255
-	#print np.array(img2)
-	#img = caffe.io.resize_image(img, (227, 227))
-	#img = cv2.resize(img, (227, 227))
-	#cv2.imwrite('/home/ubuntu/stage2.png', img2)
-	img = img.resize((227, 227), Image.BILINEAR)
-	#img = np.array(img)*1.0/255
-	#img = img.astype(np.float32)
-	#print np.array(img).shape
-	#im = Image.fromarray(im)
 	img.save('/home/ubuntu/stage2.jpg')
 	img = caffe.io.load_image('/home/ubuntu/stage2.jpg')
-	#print img2
     	net.blobs['data'].reshape(1, 3, 227,227)
     	net.blobs['data'].data[...] = transformer.preprocess('data', np.array(img))#np.array(img))
     	output = net.forward()
@@ -273,9 +262,9 @@ def CreateXml(LabelMe_path, file_, stage1_dets, stage2_probs, classes):
     os.chmod(LabelMe_file, 0o777)
 
 
-def WriteSvg(box, cls, score):
+def WriteRect(box, cls, score):
     '''
-    write to Element Tree
+    write rect to Element Tree
     '''
     #print 'box ', box
     rect_ = ET.Element('rect')
@@ -287,12 +276,19 @@ def WriteSvg(box, cls, score):
     rect_.set('height', str(int(box[3]-box[1])))
     return rect_
 
+def WriteImage(file_):
+    '''
+    write image
+    '''
+    image_ = ET.Element('image')
+    image_.set('id', str(uuid.uuid3(uuid.NAMESPACE_DNS, file_)))
+    return image_
+
 def CreateSvg(output_dir, file_, detections, probs, classes):
     '''
 	create svg using original image, detections, probability distributions and save to output
     '''
-    file_ = os.path.basename(file_.rsplit(".",1)[0]) + '.svg'
-    output = os.path.join(output_dir, file_)
+    output = os.path.join(output_dir, os.path.basename(file_.rsplit(".",1)[0]) + '.svg')
 
     try:
     	#clear existing annotations
@@ -306,19 +302,22 @@ def CreateSvg(output_dir, file_, detections, probs, classes):
     #get detection coordinates
     rbc_dets = detections[1][0]
     other_dets = detections[2][0]
+    
+    image_ = WriteImage(file_)
+    root.append(image_)
 
     #for each set of coordinates, create object instance
     for index, box in enumerate(rbc_dets):
         box = rbc_dets[index]
         #print box
         attributes = str(rbc_dets[index][-1])
-        root.append(WriteSvg(box[:4], classes[1], box[4]))
+        root.append(WriteRect(box[:4], classes[1], box[4]))
     for index_other, box in enumerate(other_dets):
         index += 1
         box = other_dets[index_other]
         attributes = str(other_dets[index_other][-1])
         print stage2_probs[index_other], np.argmax(stage2_probs[index_other])
-        root.append(WriteSvg(box[:4], classes[np.argmax(stage2_probs[index_other])], box[4]))
+        root.append(WriteRect(box[:4], classes[np.argmax(stage2_probs[index_other])], box[4]))
 
     tree.write(output)
     os.chmod(output, 0o777)
