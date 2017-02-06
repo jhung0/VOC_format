@@ -274,20 +274,20 @@ def CreateXml(LabelMe_path, file_, stage1_dets, stage2_probs, classes):
 
 
 def WriteSvg(box, cls, score):
-        '''
-        write to Element Tree
-        '''
-        #print 'box ', box
-        rect_ = ET.Element('rect')
-        rect_.set('description', cls)
-        rect_.set('score', score)
-        rect_.set('x', box[0])
-	rect_.set('y', box[1])
-	rect_.set('width', box[2]-box[0])
-	rect_.set('height', box[3]-box[1])
-	return rect_
+    '''
+    write to Element Tree
+    '''
+    #print 'box ', box
+    rect_ = ET.Element('rect')
+    rect_.set('description', cls)
+    rect_.set('score', str(score))
+    rect_.set('x', str(int(box[0])))
+    rect_.set('y', str(int(box[1])))
+    rect_.set('width', str(int(box[2]-box[0])))
+    rect_.set('height', str(int(box[3]-box[1])))
+    return rect_
 
-def CreateSvg(output_dir, file_, detections, probs):
+def CreateSvg(output_dir, file_, detections, probs, classes):
     '''
 	create svg using original image, detections, probability distributions and save to output
     '''
@@ -315,7 +315,7 @@ def CreateSvg(output_dir, file_, detections, probs):
         root.append(WriteSvg(box[:4], classes[1], box[4]))
     for index_other, box in enumerate(other_dets):
         index += 1
-        box = other_dets[index_other][:4]
+        box = other_dets[index_other]
         attributes = str(other_dets[index_other][-1])
         print stage2_probs[index_other], np.argmax(stage2_probs[index_other])
         root.append(WriteSvg(box[:4], classes[np.argmax(stage2_probs[index_other])], box[4]))
@@ -367,7 +367,7 @@ if __name__ == '__main__':
 	nms_dets = StageOne(file_, args.prototxt1, args.caffemodel1, classes1, THRESHOLD=1.0/len(classes1), output_dir=args.output_dir)
 	stage2_probs = StageTwo(file_, args.prototxt2, args.caffemodel2, nms_dets[classes1.index('other')][0], classes2)
 	#print 'stage 2', stage2_dets
-	CreateSvg(args.output_dir, file_, nms_dets, stage2_probs)
+	CreateSvg(args.output_dir, file_, nms_dets, stage2_probs, classes2)
 
 
 
