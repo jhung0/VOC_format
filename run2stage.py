@@ -163,7 +163,7 @@ def StageTwo(file_path, prototxt, model, detections, classes):
     net.name = os.path.splitext(os.path.basename(model))
 
     transformer = caffe.io.Transformer({'data': net.blobs['data'].data.shape})
-    transformer.set_mean('data', np.array([193.30, 135.15, 153.60  ]))
+    transformer.set_mean('data', np.array([189.97, 133.83, 149.26  ]))
     transformer.set_transpose('data', (2,0,1))
     transformer.set_raw_scale('data', 255.0)
     transformer.set_channel_swap('data', (2,1,0))
