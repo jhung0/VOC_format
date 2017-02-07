@@ -146,7 +146,6 @@ def StageOne(file_, prototxt, model, classes, THRESHOLD=1.0/3, num_images = 1, o
     det_file = os.path.join(output_dir, 'detections.pkl')
     with open(det_file, 'wb') as f:
         cPickle.dump(all_boxes, f, cPickle.HIGHEST_PROTOCOL)
-    #print len(all_boxes[0][0]), len(all_boxes[0][1]), len(all_boxes[1][0]), len(all_boxes[1][1]), len(all_boxes[2][0]), len(all_boxes[2][1])
     print 'Applying NMS to all detections'
     nms_dets = apply_nms(all_boxes, cfg.TEST.NMS)
     with open(det_file, 'wb') as f:
@@ -330,6 +329,9 @@ def get_files(ImageSet_test):
             test_files.append(file_.strip())
     return test_files
 
+def get_dimensions(file_):
+    with Image.open(file_) as im:
+	return im.size
 
 if __name__ == '__main__':
     args = parse_args()
@@ -341,11 +343,10 @@ if __name__ == '__main__':
         cfg_from_file(args.cfg_file1)
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
-
     cfg.GPU_ID = args.gpu_id
 
-    print('Using config:')
-    pprint.pprint(cfg)
+    #print('Using config:')
+    #pprint.pprint(cfg)
 
     while not os.path.exists(args.caffemodel1) and args.wait:
         print('Waiting for {} to exist...'.format(args.caffemodel1))
@@ -363,6 +364,9 @@ if __name__ == '__main__':
 
     #for each image in the list, run through stage 1, then run through stage 2, then convert results and create xml file
     for file_index, file_ in enumerate(test_files):
+	dimensions = get_dimensions(file_)
+	cfg_from_list(['TEST.SCALES', str([min(dimensions)]), 'TEST.MAX_SIZE', str(max(dimensions))])
+	pprint.pprint(cfg)
 	nms_dets = StageOne(file_, args.prototxt1, args.caffemodel1, classes1, THRESHOLD=1.0/len(classes1), output_dir=args.output_dir)
 	stage2_probs = StageTwo(file_, args.prototxt2, args.caffemodel2, nms_dets[classes1.index('other')][0], classes2)
 	#print 'stage 2', stage2_dets
