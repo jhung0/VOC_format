@@ -42,18 +42,18 @@ def parse_args():
                         default=0, type=int)
     parser.add_argument('--prototxt1', dest='prototxt1',
                         help='prototxt file defining the network',
-                        default=None, type=str)
+                        default='/home/ubuntu/py-faster-rcnn/models/VGG_CNN_M_1024/faster_rcnn_end2end/test.prototxt', type=str)
     parser.add_argument('--prototxt2', dest='prototxt2',
                         help='prototxt file defining the network',
-                        default=None, type=str)
+                        default='/home/ubuntu/py-faster-rcnn/caffe-fast-rcnn/models/bvlc_reference_caffenet/deploy.prototxt', type=str)
     parser.add_argument('--model1', dest='caffemodel1',
                         help='model to test',
-                        default=None, type=str)
+                        default='/home/ubuntu/py-faster-rcnn/output/faster_rcnn_end2end/train/vgg_cnn_m_1024_faster_rcnn_lr0.01_iter_100000.caffemodel', type=str)
     parser.add_argument('--model2', dest='caffemodel2',
                         help='model to test',
-                        default=None, type=str)
+                        default='/home/ubuntu/py-faster-rcnn/caffe-fast-rcnn/models/bvlc_reference_caffenet/caffenet_train_iter_40000.caffemodel', type=str)
     parser.add_argument('--cfg1', dest='cfg_file1',
-                        help='optional config file', default=None, type=str)
+                        help='optional config file', default='/home/ubuntu/py-faster-rcnn/experiments/cfgs/faster_rcnn_end2end.yml', type=str)
     parser.add_argument('--wait', dest='wait',
                         help='wait until net file exists',
                         default=True, type=bool)
@@ -69,7 +69,7 @@ def parse_args():
 			help='list of class names', default=['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu'],
 			type=list) 
     parser.add_argument('--output', dest='output_dir',
-			help='output directory',default='/home/ubuntu/py-faster-rcnn/output', type=str)
+			help='output directory',default='/home/ubuntu/svg', type=str)
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
