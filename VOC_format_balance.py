@@ -19,7 +19,7 @@ DIFFICULT = True #whether there's a difficult tag
 ROTATE = True #whether to (in addition to original subimages), flip and rotate by 90, 180, 270 
 UNCERTAIN_CLASS = False #don't have uncertain class, either ignore or tag as difficult
 FLIP = False  #whether to flip
-TRAINING_SET_DIR = ['g16_t1_up', 'g16_t2_up', 'g12', 'g11_t1', 'g7_t1_up']
+TRAINING_SET_DIR = ['g16_t1_up', 'g16_t2_up', 'g12', 'g11_t1', 'g7_t1_up', 'g8_t1_up']
 CLASSES = ['rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
 #extract data from xml file
 def extractObjectData(obj):

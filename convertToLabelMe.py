@@ -19,7 +19,7 @@ LabelMe_path = '/var/www/html/LabelMeAnnotationTool'
 LabelMe_annotation_dir = os.path.join(LabelMe_path, 'Annotations')
 DET = int(argv[1])#2943
 #create LabelMe xml file from detection coordinates
-classes = ['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
+classes = ['__background__', 'rbc', 'other']#['__background__', 'rbc', 'tro', 'sch', 'ring', 'gam', 'leu']
 THRESHOLD = 0.5
 path = os.path.join(data_path,'results', test_name)
 for file_index, file_ in enumerate(test_files):
