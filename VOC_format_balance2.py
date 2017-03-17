@@ -299,7 +299,7 @@ if __name__ == '__main__':
 					minor_label_list = getMinorLabels(counts, classes)
 					#print minor_label_list
 					max_class = classes[counts.index(max(counts))]
-					if any(object_data[-2] in minor_label_list and object_data[-1] == False for object_data in data_crop):
+					if any(object_data[-2] in minor_label_list for object_data in data_crop):
 						empty = False
 						for ii in range(0, 4, 4/(4**ROTATE)):
 							cropped = cropped_.copy()
@@ -312,8 +312,7 @@ if __name__ == '__main__':
 							saveAll(cropped, data_crop, classes, annotation_name, image_name, filename_train, imageset_item, small_size, ii)
 							num_objects += len(data_crop)
 					#randomly rotate
-					#elif len(data_crop) > 0 and any(object_data[-2] not in ['rbc']+minor_label_list  and object_data[-1] == False for object_data in data_crop):
-					elif len(data_crop) > 0 and all(object_data[-1] == False for object_data in data_crop):
+					elif len(data_crop) > 0:
 						sub += 1
 						all_rbc = all(object_data[-2] == max_class for object_data in data_crop)
                                                 if all_rbc and num_rbc_only >= RBC_LIMIT:
