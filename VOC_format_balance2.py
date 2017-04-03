@@ -330,21 +330,21 @@ if __name__ == '__main__':
                                                 imageset_item = s_name+'/'+subname
 						saveAll(cropped, data_crop, classes, annotation_name, image_name, filename_train, imageset_item, small_size, rand_rotate)
 						num_objects += len(data_crop)
-						
-			elif train_or_test == 'test': #full image with all annotations
-        			empty = False #True
-        			#if Annotation file exists, remove
-        			name = os.path.basename(file_)
-        			filename_annotation = removeIfExists(os.path.join(output_dir, 'Annotations', s_name, name+'.txt'))
+				filename_train = os.path.join(output_dir, 'ImageSets', 'trainfull.txt')
+			#elif train_or_test == 'test': #full image with all annotations
+        		empty = False #True
+        		#if Annotation file exists, remove
+        		name = os.path.basename(file_)
+        		filename_annotation = removeIfExists(os.path.join(output_dir, 'Annotations', s_name, name+'.txt'))
         
-        			for object_data in data:
-            				empty = False
-	    				saveAnnotation(filename_annotation, object_data[0:4], object_data[-2], object_data[-1])
-        			if not empty:
-	    				saveImageSet(filename_train, s_name+'/'+name)
-					image_name = os.path.join(output_dir, 'Images', s_name, name+file_extension)
-					if not os.path.exists(os.path.dirname(image_name)):
-						os.makedirs(os.path.dirname(image_name))
-            				copyfile(filename, image_name)
+        		for object_data in data:
+            			empty = False
+	    			saveAnnotation(filename_annotation, object_data[0:4], object_data[-2], object_data[-1])
+        		if not empty:
+	    			saveImageSet(filename_train, s_name+'/'+name)
+				image_name = os.path.join(output_dir, 'Images', s_name, name+file_extension)
+				if not os.path.exists(os.path.dirname(image_name)):
+					os.makedirs(os.path.dirname(image_name))
+            			copyfile(filename, image_name)
 
 #print counts
