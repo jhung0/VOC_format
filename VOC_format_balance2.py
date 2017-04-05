@@ -285,7 +285,9 @@ if __name__ == '__main__':
 				if len(data) == 0:
 					print 'no objects'
 					continue
-			elif train_or_test != 'test':
+			elif train_or_test == 'test':
+				data = []
+			else:
 				continue
 			if train_or_test  == 'train':
 				total_num_objects = len(data)
