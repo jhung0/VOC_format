@@ -232,7 +232,11 @@ if __name__ == '__main__':
 	small_size = args.subimage_size 
 	print 'size of subimages (px)', small_size
 	train_dir = args.TRAINING_SET_DIR
+	if not train_dir:
+		train_dir = []
 	test_dir = args.TEST_SET_DIR
+	if not test_dir:
+		test_dir = []
 	print train_dir, test_dir
 	all_slide_names = train_dir + test_dir  
 	random.shuffle(all_slide_names)
@@ -274,13 +278,14 @@ if __name__ == '__main__':
     
     			#get associated xml file and parse for all objects
 			filename_xml = getXml(filename, file_extension)
-			if not filename_xml:
-				continue
-    			print filename_xml    
+			if filename_xml:
+    				print filename_xml    
 
-			data, counts = getData(filename_xml, classes, counts)
-			if len(data) == 0:
-				print 'no objects'
+				data, counts = getData(filename_xml, classes, counts)
+				if len(data) == 0:
+					print 'no objects'
+					continue
+			elif train_or_test != 'test':
 				continue
 			if train_or_test  == 'train':
 				total_num_objects = len(data)
@@ -340,7 +345,8 @@ if __name__ == '__main__':
         		for object_data in data:
             			empty = False
 	    			saveAnnotation(filename_annotation, object_data[0:4], object_data[-2], object_data[-1])
-        		if not empty:
+        		if not empty or train_or_test == 'test':
+				print train_or_test
 	    			saveImageSet(filename_train, s_name+'/'+name)
 				image_name = os.path.join(output_dir, 'Images', s_name, name+file_extension)
 				if not os.path.exists(os.path.dirname(image_name)):
