@@ -28,9 +28,20 @@ for file_index, file_ in enumerate(test_files):
     #LabelMe_file = os.path.join(LabelMe_annotation_dir, image_dir, file_+'.xml')
     LabelMe_file = os.path.join(LabelMe_annotation_dir, file_+'.xml')
     #print LabelMe_file
-    #clear existing annotations
-    tree = ET.parse(LabelMe_file)
-    root = tree.getroot()
+    if not os.path.exists(LabelMe_file):
+	root = ET.Element('annotation')
+	filename_ = ET.SubElement(root, 'filename')
+	filename_.text = file_+'.jpg'
+	folder_ = ET.SubElement(root, 'folder')
+	imagesize_ = ET.SubElement(root, 'imagesize')
+	nrows_ = ET.SubElement(imagesize_, 'nrows')
+	#nrows_.text = 
+	ncols_ = ET.SubElement(imagesize_, 'ncols')
+	tree = ET.ElementTree(root)
+    else:
+    	#clear existing annotations
+    	tree = ET.parse(LabelMe_file)
+    	root = tree.getroot()
     root.find('folder').text = image_dir
     for obj in root.findall('object'):
             root.remove(obj)
