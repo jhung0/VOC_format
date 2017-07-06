@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import operator
 import numpy as np
 from scipy import stats
+#
 '''
 Randomly takes X subsamples of full image and outputs in other folder
 Usage: python VOC_format.py [Output directory] [Image files]
