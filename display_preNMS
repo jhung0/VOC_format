@@ -1,0 +1,67 @@
+import numpy as np
+from PIL import Image
+from IPython.display import display
+#obtain detections
+detections=pickle.load(open('/opt/py-faster-rcnn/output/faster_rcnn_end2end/test/vgg_cnn_m_1024_faster_rcnn_iter_30000/detections.pkl'))
+
+#obtain list of test images in order
+test_files = []
+data_path = '/opt/try1/'
+with open(os.path.join(data_path,'data', 'ImageSets', 'test.txt')) as f:
+    for file_ in f.readlines():
+        test_files.append(file_.strip())
+#print test_files
+image_path = os.path.join(data_path,'data','Images')
+
+THRESHOLD = 0.2
+#for each test image, for each class get the bounding box coordinates of the objects with probability >= THRESHOLD
+#for each filtered detection, draw a colored box 
+for file_index, file_ in enumerate(test_files):
+    if file_index > 5:
+        break
+    print file_
+    #get numpy array of image 
+    try:
+        extension='.tif'
+        pil_im = np.asarray(Image.open(os.path.join(image_path, file_+extension)))
+    except: 
+        extension='.jpg' 
+        pil_im = np.asarray(Image.open(os.path.join(image_path, file_+extension)))
+
+    pil_im = pil_im.copy()
+    
+    for cls in range(1,len(detections)):
+        
+        filtered_boxes = [detections[cls][file_index][ii][0:4] for ii in range(len(detections[cls][file_index])) if detections[cls][file_index][ii][-1] >= THRESHOLD]
+        for box in filtered_boxes:
+            if cls ==1:
+                for i in range(box[0], box[2]):
+                    pil_im[box[1],i, :] = 0
+                    pil_im[box[3],i, :] = 0
+                for j in range(box[1], box[3]):
+                    pil_im[j,box[0], :] = 0
+                    pil_im[j,box[2], :] = 0
+            elif cls ==2:
+                for i in range(box[0], box[2]):
+                    pil_im[box[1],i, 0] = 255
+                    pil_im[box[3],i, 0] = 255
+                for j in range(box[1], box[3]):
+                    pil_im[j,box[0], 0] = 255
+                    pil_im[j,box[2], 0] = 255
+            elif cls ==3:
+                for i in range(box[0], box[2]):
+                    pil_im[box[1],i, 1] = 255
+                    pil_im[box[3],i, 1] = 255
+                for j in range(box[1], box[3]):
+                    pil_im[j,box[0], 1] = 255
+                    pil_im[j,box[2], 1] = 255
+            elif cls ==4:
+                for i in range(box[0], box[2]):
+                    pil_im[box[1],i, 2] = 255
+                    pil_im[box[3], i,2] = 255
+                for j in range(box[1], box[3]):
+                    pil_im[j,box[0], 2] = 255
+                    pil_im[j,box[2],  2] = 255
+                
+    display(Image.fromarray(pil_im,'RGB'))
+    
